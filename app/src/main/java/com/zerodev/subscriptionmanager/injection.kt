@@ -11,7 +11,7 @@ val databaseModule = module {
         Room.databaseBuilder(
             androidContext(),
             SubscriptionDatabase::class.java,
-            "subscription_database.db",
+            "subscription_manager.db",
         ).build()
     }
 }
