@@ -12,7 +12,8 @@ class SubscriptionManagerApp : Application() {
         super.onCreate()
 
         val appModules = listOf(
-            databaseModule
+            databaseModule,
+            repositoryModule
         )
 
         startKoin {
