@@ -5,7 +5,7 @@ import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import kotlinx.coroutines.flow.Flow
 
 interface SubscriptionRepository {
-    fun getAllSubscription(): Flow<List<Subscription>>
+    fun getAllSubscriptions(): Flow<List<Subscription>>
     suspend fun getSubscriptionById(id: Int): Subscription?
     suspend fun insertSubscription(subscription: Subscription)
     suspend fun updateSubscription(subscription: Subscription)
@@ -14,7 +14,7 @@ interface SubscriptionRepository {
 
 class SubscriptionRepositoryImpl(private val subscriptionDao: SubscriptionDao) :
     SubscriptionRepository {
-    override fun getAllSubscription(): Flow<List<Subscription>> {
+    override fun getAllSubscriptions(): Flow<List<Subscription>> {
         return subscriptionDao.getAllSubscriptions()
     }
 

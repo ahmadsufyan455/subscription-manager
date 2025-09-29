@@ -13,7 +13,8 @@ class SubscriptionManagerApp : Application() {
 
         val appModules = listOf(
             databaseModule,
-            repositoryModule
+            repositoryModule,
+            viewModelModule
         )
 
         startKoin {
