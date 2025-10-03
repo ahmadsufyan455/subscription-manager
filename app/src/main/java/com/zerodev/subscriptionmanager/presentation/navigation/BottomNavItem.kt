@@ -2,31 +2,33 @@ package com.zerodev.subscriptionmanager.presentation.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
+import com.zerodev.subscriptionmanager.R
 
 sealed class BottomNavItem(
     val route: String,
     val title: String,
-    val icon: ImageVector
+    val icon: @Composable () -> Painter
 ) {
     object Home : BottomNavItem(
         route = "home",
         title = "Home",
-        icon = Icons.Default.Home
+        icon = { painterResource(id = R.drawable.home) }
     )
 
     object AddSubscription : BottomNavItem(
         route = "add_subscription",
         title = "Add",
-        icon = Icons.Default.Add
+        icon = { rememberVectorPainter(Icons.Default.Add) }
     )
 
     object Settings : BottomNavItem(
         route = "settings",
         title = "Settings",
-        icon = Icons.Default.Settings
+        icon = { painterResource(id = R.drawable.settings) }
     )
 }
 

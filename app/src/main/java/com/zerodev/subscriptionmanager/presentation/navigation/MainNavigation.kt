@@ -7,8 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +15,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -120,7 +117,7 @@ fun BottomNavigationBar(
             val iconColor by animateColorAsState(
                 targetValue = when {
                     selected -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    else -> MaterialTheme.colorScheme.onSurface
                 },
                 animationSpec = tween(300),
                 label = "iconColor"
@@ -132,29 +129,23 @@ fun BottomNavigationBar(
                         Box(
                             modifier = Modifier
                                 .clip(CircleShape)
-                                .background(iconColor.copy(alpha = 0.1f))
-                                .padding(8.dp)
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
+                                .padding(12.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Add,
+                                painter = item.icon(),
                                 contentDescription = item.title,
-                                tint = iconColor
+                                tint = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                     } else {
                         Icon(
-                            imageVector = item.icon,
+                            painter = item.icon(),
                             contentDescription = item.title,
                             tint = iconColor,
                             modifier = Modifier.scale(scale)
                         )
                     }
-                },
-                label = {
-                    Text(
-                        text = item.title,
-                        color = iconColor
-                    )
                 },
                 selected = selected,
                 onClick = {
