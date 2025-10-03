@@ -48,6 +48,8 @@ import dev.chrisbanes.haze.rememberHazeState
 fun MainScreen(
     navController: NavHostController = rememberNavController()
 ) {
+    val hazeState = rememberHazeState()
+
     val bottomSheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
     )
@@ -57,15 +59,14 @@ fun MainScreen(
     if (showAddSubscriptionSheet) {
         ModalBottomSheet(
             onDismissRequest = { showAddSubscriptionSheet = false },
-            sheetState = bottomSheetState
+            sheetState = bottomSheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
         ) {
             AddSubscriptionBottomSheet(
                 onDismiss = { showAddSubscriptionSheet = false }
             )
         }
     }
-
-    val hazeState = rememberHazeState()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,

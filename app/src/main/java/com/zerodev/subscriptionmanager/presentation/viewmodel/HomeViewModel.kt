@@ -57,7 +57,6 @@ class HomeViewModel(private val repository: SubscriptionRepository) : ViewModel(
             .filter { it.status == SubscriptionStatus.ACTIVE }
             .sumOf { subscription ->
                 when (subscription.billingCycle) {
-                    BillingCycle.WEEKLY -> subscription.price * 4.33 // ~4.33 weeks per month
                     BillingCycle.MONTHLY -> subscription.price
                     BillingCycle.QUARTERLY -> subscription.price / 3
                     BillingCycle.YEARLY -> subscription.price / 12
