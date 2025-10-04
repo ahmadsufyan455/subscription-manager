@@ -34,6 +34,7 @@ import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.utils.formatDate
+import com.zerodev.subscriptionmanager.utils.getSubscriptionIcon
 import java.util.Locale
 
 @Composable
@@ -70,7 +71,7 @@ fun SubscriptionCard(subscription: Subscription) {
                                 .width(60.dp)
                                 .height(60.dp)
                                 .padding(8.dp),
-                            painter = painterResource(R.drawable.claude),
+                            painter = painterResource(getSubscriptionIcon(subscription.name)),
                             contentDescription = "Subscription Icon",
                             tint = Color.Unspecified
                         )
