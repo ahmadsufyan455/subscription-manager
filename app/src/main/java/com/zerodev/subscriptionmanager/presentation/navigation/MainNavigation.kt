@@ -64,7 +64,6 @@ fun MainScreen(
         ) {
             AddSubscriptionBottomSheet(
                 onDismiss = { showAddSubscriptionSheet = false },
-                sheetState = bottomSheetState
             )
         }
     }
