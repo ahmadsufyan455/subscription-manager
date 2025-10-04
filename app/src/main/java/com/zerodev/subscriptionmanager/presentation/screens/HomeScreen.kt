@@ -24,6 +24,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -32,6 +33,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -59,8 +61,42 @@ fun HomeScreen(
     contentPadding: PaddingValues,
     viewModel: HomeViewModel = koinViewModel()
 ) {
+    val scope = rememberCoroutineScope()
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    var showAddSubscriptionSheet by remember { mutableStateOf(false) }
+    var editSubscriptionId by remember { mutableStateOf<Int?>(null) }
+
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
+
+    if (showAddSubscriptionSheet) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showAddSubscriptionSheet = false
+                editSubscriptionId = null
+            },
+            sheetState = bottomSheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            AddSubscriptionBottomSheet(
+                onDismiss = {
+                    scope.launch {
+                        bottomSheetState.hide()
+                    }.invokeOnCompletion {
+                        if (!bottomSheetState.isVisible) {
+                            showAddSubscriptionSheet = false
+                            editSubscriptionId = null
+                        }
+                    }
+                },
+                isEditMode = editSubscriptionId != null,
+                subscriptionId = editSubscriptionId,
+            )
+        }
+    }
 
     // Handle error messages
     LaunchedEffect(uiState.error) {
@@ -103,7 +139,11 @@ fun HomeScreen(
                 uiState = uiState,
                 onDeleted = viewModel::deleteSubscription,
                 paddingValues = paddingValues,
-                contentPadding = contentPadding
+                contentPadding = contentPadding,
+                onEditSubscription = { subscriptionId ->
+                    editSubscriptionId = subscriptionId
+                    showAddSubscriptionSheet = true
+                }
             )
         }
     }
@@ -134,7 +174,8 @@ private fun HomeContent(
     onDeleted: (Subscription) -> Unit,
     paddingValues: PaddingValues,
     contentPadding: PaddingValues,
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
+    onEditSubscription: (Int) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -181,6 +222,9 @@ private fun HomeContent(
                                     }
                                 }
                             }
+                        },
+                        onClick = {
+                            onEditSubscription(subscription.id)
                         }
                     )
                 }

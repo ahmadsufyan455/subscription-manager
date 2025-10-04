@@ -2,6 +2,7 @@ package com.zerodev.subscriptionmanager.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,7 +42,11 @@ import me.saket.swipe.SwipeableActionsBox
 import java.util.Locale
 
 @Composable
-fun SubscriptionCard(subscription: Subscription, onDelete: (Subscription) -> Unit) {
+fun SubscriptionCard(
+    subscription: Subscription,
+    onDelete: (Subscription) -> Unit,
+    onClick: () -> Unit
+) {
     val deleteSubscription = SwipeAction(
         icon = { Icon(Icons.Default.Delete, contentDescription = "Delete") },
         background = MaterialTheme.colorScheme.error.copy(alpha = 0.8f),
@@ -57,7 +62,9 @@ fun SubscriptionCard(subscription: Subscription, onDelete: (Subscription) -> Uni
         content = {
             Box(modifier = Modifier.fillMaxWidth()) {
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onClick() },
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = when (subscription.status) {

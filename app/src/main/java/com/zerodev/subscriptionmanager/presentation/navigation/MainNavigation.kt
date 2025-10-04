@@ -63,7 +63,8 @@ fun MainScreen(
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             AddSubscriptionBottomSheet(
-                onDismiss = { showAddSubscriptionSheet = false }
+                onDismiss = { showAddSubscriptionSheet = false },
+                sheetState = bottomSheetState
             )
         }
     }

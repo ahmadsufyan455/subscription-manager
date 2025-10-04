@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -47,14 +48,36 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun AddSubscriptionBottomSheet(
     onDismiss: () -> Unit,
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
+    isEditMode: Boolean = false,
+    subscriptionId: Int? = null,
 ) {
     val focusManager = LocalFocusManager.current
+    val uiState by viewModel.uiState.collectAsState()
 
-    var name by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var selectedBillingCycle by remember { mutableStateOf(BillingCycle.MONTHLY) }
-    var startDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    // Find subscription if in edit mode
+    val existingSubscription = remember(subscriptionId, uiState.subscriptions) {
+        subscriptionId?.let { id ->
+            uiState.subscriptions.find { it.id == id }
+        }
+    }
+
+    var name by remember(existingSubscription) { mutableStateOf(existingSubscription?.name ?: "") }
+    var price by remember(existingSubscription) {
+        mutableStateOf(
+            existingSubscription?.price?.toString() ?: ""
+        )
+    }
+    var selectedBillingCycle by remember(existingSubscription) {
+        mutableStateOf(
+            existingSubscription?.billingCycle ?: BillingCycle.MONTHLY
+        )
+    }
+    var startDate by remember(existingSubscription) {
+        mutableLongStateOf(
+            existingSubscription?.startDate ?: System.currentTimeMillis()
+        )
+    }
 
     var nameError by remember { mutableStateOf<String?>(null) }
     var priceError by remember { mutableStateOf<String?>(null) }
@@ -175,20 +198,30 @@ fun AddSubscriptionBottomSheet(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Add Button
+        // Add/Update Button
         Button(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             onClick = {
                 if (validateFormInput(name, price, { nameError = it }, { priceError = it })) {
-                    val subscription = Subscription(
-                        name = name.trim(),
-                        price = price.toDouble(),
-                        billingCycle = selectedBillingCycle,
-                        startDate = startDate
-                    )
-                    viewModel.addSubscription(subscription)
+                    if (isEditMode && existingSubscription != null) {
+                        val updatedSubscription = existingSubscription.copy(
+                            name = name.trim(),
+                            price = price.toDouble(),
+                            billingCycle = selectedBillingCycle,
+                            startDate = startDate
+                        )
+                        viewModel.updateSubscription(updatedSubscription)
+                    } else {
+                        val subscription = Subscription(
+                            name = name.trim(),
+                            price = price.toDouble(),
+                            billingCycle = selectedBillingCycle,
+                            startDate = startDate
+                        )
+                        viewModel.addSubscription(subscription)
+                    }
                     onDismiss()
                 }
             },
@@ -196,7 +229,7 @@ fun AddSubscriptionBottomSheet(
         ) {
             val buttonLabelColor = if (isButtonEnable) 1f else 0.5f
             Text(
-                text = "Add Subscription",
+                text = if (isEditMode) "Update Subscription" else "Add Subscription",
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = MaterialTheme.colorScheme.onPrimary.copy(alpha = buttonLabelColor),
                 ),
