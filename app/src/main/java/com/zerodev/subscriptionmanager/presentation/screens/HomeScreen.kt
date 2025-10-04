@@ -46,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
+import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeUiState
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
@@ -240,7 +241,20 @@ private fun HomeContent(
                     EmptyStateCard()
                 }
             } else {
-                items(uiState.subscriptions) { subscription ->
+                val sortedSubscriptions = uiState.subscriptions.sortedWith(
+                    compareBy(
+                        { subscription ->
+                            when (subscription.status) {
+                                SubscriptionStatus.ACTIVE -> 0
+                                SubscriptionStatus.CANCELLED -> 1
+                                SubscriptionStatus.EXPIRED -> 2
+                            }
+                        },
+                        { it.createdAt }
+                    )
+                )
+
+                items(sortedSubscriptions) { subscription ->
                     SubscriptionCard(
                         subscription = subscription,
                         onDelete = { sub ->
