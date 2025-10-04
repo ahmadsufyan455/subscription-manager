@@ -151,7 +151,7 @@ fun SubscriptionCard(
                                     text = "$${
                                         String.format(
                                             Locale.US,
-                                            "%.2f",
+                                            "%.0f",
                                             subscription.price
                                         )
                                     }",

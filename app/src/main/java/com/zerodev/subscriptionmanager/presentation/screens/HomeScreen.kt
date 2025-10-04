@@ -301,7 +301,7 @@ private fun SummarySection(
     ) {
         SummaryCard(
             title = "Monthly Spending",
-            value = "$${String.format(Locale.US, "%.2f", totalMonthlySpending)}",
+            value = "$${String.format(Locale.US, "%.0f", totalMonthlySpending)}",
             modifier = Modifier.weight(1f)
         )
         SummaryCard(
