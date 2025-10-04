@@ -15,6 +15,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -236,6 +237,33 @@ fun AddSubscriptionBottomSheet(
                 fontWeight = FontWeight.Bold
             )
         }
+
+        if (isEditMode && existingSubscription != null)
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                onClick = {
+                    val updatedSubscription = existingSubscription.copy(
+                        name = name.trim(),
+                        price = price.toDouble(),
+                        billingCycle = selectedBillingCycle,
+                        startDate = startDate
+                    )
+                    viewModel.cancelSubscription(updatedSubscription)
+                    onDismiss()
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Text(
+                    text = "Cancel Subscription",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
         Spacer(modifier = Modifier.height(16.dp))
     }
