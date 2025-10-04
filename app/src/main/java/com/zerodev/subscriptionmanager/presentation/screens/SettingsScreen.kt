@@ -28,7 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
-import com.zerodev.subscriptionmanager.utils.NotificationScheduler
+import com.zerodev.subscriptionmanager.core.helper.NotificationScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

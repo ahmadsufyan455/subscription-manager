@@ -7,8 +7,8 @@ import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
-import com.zerodev.subscriptionmanager.utils.NotificationTracker
-import com.zerodev.subscriptionmanager.utils.RenewalHelper
+import com.zerodev.subscriptionmanager.core.helper.NotificationTracker
+import com.zerodev.subscriptionmanager.core.helper.RenewalHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

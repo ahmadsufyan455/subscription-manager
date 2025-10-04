@@ -1,4 +1,4 @@
-package com.zerodev.subscriptionmanager
+package com.zerodev.subscriptionmanager.core.di
 
 import androidx.room.Room
 import com.zerodev.subscriptionmanager.data.local.database.SubscriptionDatabase

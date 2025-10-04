@@ -1,10 +1,10 @@
-package com.zerodev.subscriptionmanager.workers
+package com.zerodev.subscriptionmanager.core.workers
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
-import com.zerodev.subscriptionmanager.utils.RenewalHelper
+import com.zerodev.subscriptionmanager.core.helper.RenewalHelper
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

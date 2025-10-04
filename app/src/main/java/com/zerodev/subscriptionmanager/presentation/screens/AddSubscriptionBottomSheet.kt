@@ -42,7 +42,7 @@ import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.components.DatePickerField
 import com.zerodev.subscriptionmanager.ui.components.GlobalTextField
-import com.zerodev.subscriptionmanager.utils.validateFormInput
+import com.zerodev.subscriptionmanager.core.utils.validateFormInput
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

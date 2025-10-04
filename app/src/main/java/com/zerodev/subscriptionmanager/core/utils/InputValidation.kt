@@ -1,4 +1,4 @@
-package com.zerodev.subscriptionmanager.utils
+package com.zerodev.subscriptionmanager.core.utils
 
 fun validateFormInput(
     name: String,

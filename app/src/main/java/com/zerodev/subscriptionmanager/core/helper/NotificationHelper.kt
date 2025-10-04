@@ -1,4 +1,4 @@
-package com.zerodev.subscriptionmanager.utils
+package com.zerodev.subscriptionmanager.core.helper
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

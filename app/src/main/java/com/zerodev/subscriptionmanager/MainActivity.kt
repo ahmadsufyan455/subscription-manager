@@ -16,9 +16,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import com.zerodev.subscriptionmanager.presentation.navigation.MainScreen
 import com.zerodev.subscriptionmanager.ui.theme.SubscriptionManagerTheme
-import com.zerodev.subscriptionmanager.utils.NotificationHelper
-import com.zerodev.subscriptionmanager.utils.NotificationScheduler
-import com.zerodev.subscriptionmanager.utils.RenewalScheduler
+import com.zerodev.subscriptionmanager.core.helper.NotificationHelper
+import com.zerodev.subscriptionmanager.core.helper.NotificationScheduler
+import com.zerodev.subscriptionmanager.core.helper.RenewalScheduler
 
 class MainActivity : ComponentActivity() {
 

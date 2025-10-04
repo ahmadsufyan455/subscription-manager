@@ -1,12 +1,12 @@
-package com.zerodev.subscriptionmanager.workers
+package com.zerodev.subscriptionmanager.core.workers
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
-import com.zerodev.subscriptionmanager.utils.NotificationHelper
-import com.zerodev.subscriptionmanager.utils.NotificationTracker
+import com.zerodev.subscriptionmanager.core.helper.NotificationHelper
+import com.zerodev.subscriptionmanager.core.helper.NotificationTracker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 

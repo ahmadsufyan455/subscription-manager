@@ -2,7 +2,10 @@ package com.zerodev.subscriptionmanager
 
 
 import android.app.Application
-import com.zerodev.subscriptionmanager.utils.RenewalScheduler
+import com.zerodev.subscriptionmanager.core.di.databaseModule
+import com.zerodev.subscriptionmanager.core.di.repositoryModule
+import com.zerodev.subscriptionmanager.core.di.viewModelModule
+import com.zerodev.subscriptionmanager.core.helper.RenewalScheduler
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.logger.AndroidLogger
 import org.koin.core.context.startKoin

@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
-import com.zerodev.subscriptionmanager.utils.getSubscriptionIcon
+import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
 import java.util.Locale
 
 @Composable
