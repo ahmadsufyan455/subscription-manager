@@ -10,6 +10,7 @@ interface SubscriptionRepository {
     suspend fun insertSubscription(subscription: Subscription)
     suspend fun updateSubscription(subscription: Subscription)
     suspend fun deleteSubscription(subscription: Subscription)
+    suspend fun updateExpiredSubscriptions()
 }
 
 class SubscriptionRepositoryImpl(private val subscriptionDao: SubscriptionDao) :
@@ -32,5 +33,15 @@ class SubscriptionRepositoryImpl(private val subscriptionDao: SubscriptionDao) :
 
     override suspend fun deleteSubscription(subscription: Subscription) {
         subscriptionDao.deleteSubscription(subscription)
+    }
+
+    override suspend fun updateExpiredSubscriptions() {
+        val activeSubscriptions = subscriptionDao.getActiveSubscriptions()
+        activeSubscriptions.forEach { subscription ->
+            val updatedSubscription = subscription.markAsExpiredIfNeeded()
+            if (updatedSubscription != subscription) {
+                subscriptionDao.updateSubscription(updatedSubscription)
+            }
+        }
     }
 }

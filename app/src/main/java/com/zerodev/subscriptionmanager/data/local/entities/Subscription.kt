@@ -59,4 +59,18 @@ data class Subscription(
         val daysLeft = (nextBilling - System.currentTimeMillis()) / (24 * 60 * 60 * 1000)
         return daysLeft.toInt().coerceAtLeast(0)
     }
+
+    fun isExpired(): Boolean {
+        if (status != SubscriptionStatus.ACTIVE) return false
+        val nextBilling = getNextBillingDate() ?: return false
+        return System.currentTimeMillis() > nextBilling
+    }
+
+    fun markAsExpiredIfNeeded(): Subscription {
+        return if (isExpired()) {
+            copy(status = SubscriptionStatus.EXPIRED)
+        } else {
+            this
+        }
+    }
 }

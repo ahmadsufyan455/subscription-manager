@@ -33,6 +33,16 @@ class HomeViewModel(private val repository: SubscriptionRepository) : ViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
+            // Update expired subscriptions before loading
+            try {
+                repository.updateExpiredSubscriptions()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Failed to update expired subscriptions: ${e.message}"
+                )
+            }
+
             repository.getAllSubscriptions()
                 .catch { throwable ->
                     _uiState.value = _uiState.value.copy(

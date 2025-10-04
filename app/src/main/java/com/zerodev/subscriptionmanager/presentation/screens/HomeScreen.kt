@@ -15,10 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,13 +40,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.zerodev.subscriptionmanager.data.local.entities.Subscription
-import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeUiState
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
+import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
 import org.koin.androidx.compose.koinViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,8 +94,6 @@ fun HomeScreen(
             HomeContent(
                 uiState = uiState,
                 paddingValues = paddingValues,
-                onCancelSubscription = viewModel::cancelSubscription,
-                onDeleteSubscription = viewModel::deleteSubscription,
                 contentPadding = contentPadding
             )
         }
@@ -131,8 +123,6 @@ private fun LoadingContent(paddingValues: PaddingValues) {
 private fun HomeContent(
     uiState: HomeUiState,
     paddingValues: PaddingValues,
-    onCancelSubscription: (Subscription) -> Unit,
-    onDeleteSubscription: (Subscription) -> Unit,
     contentPadding: PaddingValues
 ) {
     LazyColumn(
@@ -141,7 +131,7 @@ private fun HomeContent(
             .padding(paddingValues)
             .padding(horizontal = 16.dp),
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         // Summary Cards
         item {
@@ -159,9 +149,7 @@ private fun HomeContent(
         } else {
             items(uiState.subscriptions) { subscription ->
                 SubscriptionCard(
-                    subscription = subscription,
-                    onCancel = onCancelSubscription,
-                    onDelete = onDeleteSubscription
+                    subscription = subscription
                 )
             }
         }
@@ -179,7 +167,7 @@ private fun SummarySection(
     ) {
         SummaryCard(
             title = "Monthly Spending",
-            value = "$${String.format("%.2f", totalMonthlySpending)}",
+            value = "$${String.format(Locale.US, "%.2f", totalMonthlySpending)}",
             modifier = Modifier.weight(1f)
         )
         SummaryCard(
@@ -199,173 +187,29 @@ private fun SummaryCard(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
-    }
-}
-
-@Composable
-private fun SubscriptionCard(
-    subscription: Subscription,
-    onCancel: (Subscription) -> Unit,
-    onDelete: (Subscription) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = when (subscription.status) {
-                SubscriptionStatus.ACTIVE -> MaterialTheme.colorScheme.surface
-                SubscriptionStatus.CANCELLED -> MaterialTheme.colorScheme.errorContainer
-                SubscriptionStatus.EXPIRED -> MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
-            }
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = subscription.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "$${
-                            String.format(
-                                "%.2f",
-                                subscription.price
-                            )
-                        } ${subscription.billingCycle.displayName.lowercase()}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Status Badge
-                StatusBadge(status = subscription.status)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Subscription Details
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Started: ${formatDate(subscription.startDate)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (subscription.status == SubscriptionStatus.ACTIVE) {
-                        subscription.getRemainingDays()?.let { days ->
-                            Text(
-                                text = "Next billing: $days days",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                    if (subscription.cancelledAt != null) {
-                        Text(
-                            text = "Cancelled: ${formatDate(subscription.cancelledAt)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-
-                // Action Buttons
-                if (subscription.status == SubscriptionStatus.ACTIVE) {
-                    Row {
-                        IconButton(onClick = { onCancel(subscription) }) {
-                            Icon(
-                                imageVector = Icons.Default.Cancel,
-                                contentDescription = "Cancel Subscription",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                        IconButton(onClick = { onDelete(subscription) }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete Subscription",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                } else {
-                    IconButton(onClick = { onDelete(subscription) }) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete Subscription",
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatusBadge(status: SubscriptionStatus) {
-    val (backgroundColor, textColor, text) = when (status) {
-        SubscriptionStatus.ACTIVE -> Triple(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.onPrimary,
-            "Active"
-        )
-
-        SubscriptionStatus.CANCELLED -> Triple(
-            MaterialTheme.colorScheme.error,
-            MaterialTheme.colorScheme.onError,
-            "Cancelled"
-        )
-
-        SubscriptionStatus.EXPIRED -> Triple(
-            MaterialTheme.colorScheme.outline,
-            MaterialTheme.colorScheme.onSurface,
-            "Expired"
-        )
-    }
-
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = textColor,
-            fontWeight = FontWeight.Medium
-        )
     }
 }
 
@@ -374,7 +218,7 @@ private fun EmptyStateCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
         Column(
@@ -404,13 +248,8 @@ private fun EmptyStateCard() {
             Text(
                 text = "Tap the + button to add your first subscription",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
-}
-
-private fun formatDate(timestamp: Long): String {
-    val formatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    return formatter.format(Date(timestamp))
 }

@@ -24,4 +24,7 @@ interface SubscriptionDao {
 
     @Delete
     suspend fun deleteSubscription(subscription: Subscription)
+
+    @Query("SELECT * FROM subscriptions WHERE status = 'ACTIVE'")
+    suspend fun getActiveSubscriptions(): List<Subscription>
 }

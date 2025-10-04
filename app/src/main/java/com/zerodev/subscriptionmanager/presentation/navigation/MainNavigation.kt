@@ -131,7 +131,7 @@ fun BottomNavigationBar(
                             modifier = Modifier
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f))
-                                .padding(12.dp)
+                                .padding(16.dp)
                         ) {
                             Icon(
                                 painter = item.icon(),
