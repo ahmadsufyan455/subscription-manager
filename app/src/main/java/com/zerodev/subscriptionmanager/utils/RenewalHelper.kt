@@ -1,5 +1,6 @@
 package com.zerodev.subscriptionmanager.utils
 
+import android.content.Context
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
@@ -12,17 +13,18 @@ object RenewalHelper {
      * - CANCELLED subscriptions: Mark as EXPIRED if final billing period has passed
      * - EXPIRED subscriptions: No action
      */
-    suspend fun processRenewals(repository: SubscriptionRepository) {
+    suspend fun processRenewals(context: Context, repository: SubscriptionRepository) {
         try {
             // Get all subscriptions as snapshot (not Flow)
             val subscriptions = repository.getAllSubscriptionsSnapshot()
-            processSubscriptionList(subscriptions, repository)
+            processSubscriptionList(context, subscriptions, repository)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     private suspend fun processSubscriptionList(
+        context: Context,
         subscriptions: List<Subscription>,
         repository: SubscriptionRepository
     ) {
@@ -33,7 +35,7 @@ object RenewalHelper {
                 SubscriptionStatus.ACTIVE -> {
                     // Check if needs renewal
                     if (subscription.needsRenewal()) {
-                        renewSubscription(subscription, repository)
+                        renewSubscription(context, subscription, repository)
                     }
                 }
 
@@ -56,6 +58,7 @@ object RenewalHelper {
      * Renew an ACTIVE subscription by updating its start date
      */
     private suspend fun renewSubscription(
+        context: Context,
         subscription: Subscription,
         repository: SubscriptionRepository
     ) {
@@ -66,6 +69,9 @@ object RenewalHelper {
                 startDate = newStartDate
             )
             repository.updateSubscription(renewedSubscription)
+
+            // Clear notification tracking so notifications can be sent again for new billing cycle
+            NotificationTracker.clearTrackingForSubscription(context, subscription.id)
         }
     }
 

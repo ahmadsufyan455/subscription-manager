@@ -1,11 +1,13 @@
 package com.zerodev.subscriptionmanager.presentation.viewmodel
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
+import com.zerodev.subscriptionmanager.utils.NotificationTracker
 import com.zerodev.subscriptionmanager.utils.RenewalHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +23,10 @@ data class HomeUiState(
     val activeSubscriptionsCount: Int = 0
 )
 
-class HomeViewModel(private val repository: SubscriptionRepository) : ViewModel() {
+class HomeViewModel(
+    private val application: Application,
+    private val repository: SubscriptionRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -36,7 +41,7 @@ class HomeViewModel(private val repository: SubscriptionRepository) : ViewModel(
 
             // Process renewals first (check if any subscriptions need renewal)
             try {
-                RenewalHelper.processRenewals(repository)
+                RenewalHelper.processRenewals(application, repository)
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -116,6 +121,8 @@ class HomeViewModel(private val repository: SubscriptionRepository) : ViewModel(
         viewModelScope.launch {
             try {
                 repository.deleteSubscription(subscription)
+                // Clear notification tracking for deleted subscription
+                NotificationTracker.clearTrackingForSubscription(application, subscription.id)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to delete subscription: ${e.message}"

@@ -14,7 +14,7 @@ import org.koin.core.component.inject
  * - Expires CANCELLED subscriptions after final billing period
  */
 class SubscriptionRenewalWorker(
-    context: Context,
+    private val context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params), KoinComponent {
 
@@ -23,7 +23,7 @@ class SubscriptionRenewalWorker(
     override suspend fun doWork(): Result {
         return try {
             // Process all subscription renewals
-            RenewalHelper.processRenewals(repository)
+            RenewalHelper.processRenewals(context, repository)
 
             Result.success()
         } catch (e: Exception) {

@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
+import com.zerodev.subscriptionmanager.utils.NotificationScheduler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,6 +103,13 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         onCheckedChange = { enabled ->
                             notificationsEnabled = enabled
                             sharedPrefs.edit { putBoolean("notifications_enabled", enabled) }
+
+                            // Schedule or cancel notifications based on toggle
+                            if (enabled) {
+                                NotificationScheduler.scheduleNotificationCheck(context)
+                            } else {
+                                NotificationScheduler.cancelNotificationCheck(context)
+                            }
                         }
                     )
                 }
