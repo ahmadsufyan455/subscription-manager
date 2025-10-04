@@ -25,8 +25,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -34,15 +36,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeUiState
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import java.util.Locale
 
@@ -78,7 +85,8 @@ fun HomeScreen(
                     IconButton(onClick = { viewModel.refreshSubscriptions() }) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh"
+                            contentDescription = "Refresh",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -93,6 +101,7 @@ fun HomeScreen(
         } else {
             HomeContent(
                 uiState = uiState,
+                onDeleted = viewModel::deleteSubscription,
                 paddingValues = paddingValues,
                 contentPadding = contentPadding
             )
@@ -122,37 +131,68 @@ private fun LoadingContent(paddingValues: PaddingValues) {
 @Composable
 private fun HomeContent(
     uiState: HomeUiState,
+    onDeleted: (Subscription) -> Unit,
     paddingValues: PaddingValues,
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues,
+    viewModel: HomeViewModel = koinViewModel()
 ) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .padding(horizontal = 16.dp),
-        contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        // Summary Cards
-        item {
-            SummarySection(
-                totalMonthlySpending = uiState.totalMonthlySpending,
-                activeSubscriptionsCount = uiState.activeSubscriptionsCount
-            )
-        }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var deletedSubscription by remember { mutableStateOf<Subscription?>(null) }
 
-        // Subscriptions List
-        if (uiState.subscriptions.isEmpty()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            contentPadding = contentPadding,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            // Summary Cards
             item {
-                EmptyStateCard()
-            }
-        } else {
-            items(uiState.subscriptions) { subscription ->
-                SubscriptionCard(
-                    subscription = subscription
+                SummarySection(
+                    totalMonthlySpending = uiState.totalMonthlySpending,
+                    activeSubscriptionsCount = uiState.activeSubscriptionsCount
                 )
             }
+
+            // Subscriptions List
+            if (uiState.subscriptions.isEmpty()) {
+                item {
+                    EmptyStateCard()
+                }
+            } else {
+                items(uiState.subscriptions) { subscription ->
+                    SubscriptionCard(
+                        subscription = subscription,
+                        onDelete = { sub ->
+                            deletedSubscription = sub
+                            onDeleted(sub)
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "${sub.name} deleted",
+                                    actionLabel = "Undo",
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    deletedSubscription?.let { deleted ->
+                                        viewModel.addSubscription(deleted)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
+            }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = contentPadding.calculateBottomPadding())
+        )
     }
 }
 
