@@ -50,7 +50,29 @@ data class Subscription(
     fun isActive(): Boolean = status == SubscriptionStatus.ACTIVE
 
     fun getNextBillingDate(): Long? {
-        return if (isActive()) billingCycle.getNextBillingDate(startDate) else null
+        if (status != SubscriptionStatus.ACTIVE && status != SubscriptionStatus.CANCELLED) return null
+
+        var nextDate = billingCycle.getNextBillingDate(startDate)
+        val currentTime = System.currentTimeMillis()
+
+        // Keep advancing until we find a future date
+        while (nextDate <= currentTime) {
+            nextDate = billingCycle.getNextBillingDate(nextDate)
+        }
+
+        return nextDate
+    }
+
+    fun getCurrentBillingPeriodStart(): Long {
+        var periodStart = startDate
+        val currentTime = System.currentTimeMillis()
+
+        // Advance to current period
+        while (billingCycle.getNextBillingDate(periodStart) <= currentTime) {
+            periodStart = billingCycle.getNextBillingDate(periodStart)
+        }
+
+        return periodStart
     }
 
     fun getRemainingDays(): Int? {
@@ -60,17 +82,9 @@ data class Subscription(
         return daysLeft.toInt().coerceAtLeast(0)
     }
 
-    fun isExpired(): Boolean {
+    fun needsRenewal(): Boolean {
         if (status != SubscriptionStatus.ACTIVE) return false
-        val nextBilling = getNextBillingDate() ?: return false
-        return System.currentTimeMillis() > nextBilling
-    }
-
-    fun markAsExpiredIfNeeded(): Subscription {
-        return if (isExpired()) {
-            copy(status = SubscriptionStatus.EXPIRED)
-        } else {
-            this
-        }
+        val currentPeriodStart = getCurrentBillingPeriodStart()
+        return currentPeriodStart != startDate
     }
 }

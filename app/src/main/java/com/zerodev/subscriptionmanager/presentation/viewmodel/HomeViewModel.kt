@@ -6,6 +6,7 @@ import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
+import com.zerodev.subscriptionmanager.utils.RenewalHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,14 +34,11 @@ class HomeViewModel(private val repository: SubscriptionRepository) : ViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-            // Update expired subscriptions before loading
+            // Process renewals first (check if any subscriptions need renewal)
             try {
-                repository.updateExpiredSubscriptions()
+                RenewalHelper.processRenewals(repository)
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = "Failed to update expired subscriptions: ${e.message}"
-                )
+                e.printStackTrace()
             }
 
             repository.getAllSubscriptions()

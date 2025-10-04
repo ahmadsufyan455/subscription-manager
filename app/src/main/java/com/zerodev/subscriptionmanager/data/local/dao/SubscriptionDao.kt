@@ -13,6 +13,9 @@ interface SubscriptionDao {
     @Query("SELECT * FROM subscriptions ORDER BY created_at DESC")
     fun getAllSubscriptions(): Flow<List<Subscription>>
 
+    @Query("SELECT * FROM subscriptions ORDER BY created_at DESC")
+    suspend fun getAllSubscriptionsSnapshot(): List<Subscription>
+
     @Query("SELECT * FROM subscriptions WHERE id = :id")
     suspend fun getSubscriptionById(id: Int): Subscription?
 

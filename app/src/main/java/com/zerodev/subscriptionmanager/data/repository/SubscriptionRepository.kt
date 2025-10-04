@@ -6,17 +6,21 @@ import kotlinx.coroutines.flow.Flow
 
 interface SubscriptionRepository {
     fun getAllSubscriptions(): Flow<List<Subscription>>
+    suspend fun getAllSubscriptionsSnapshot(): List<Subscription>
     suspend fun getSubscriptionById(id: Int): Subscription?
     suspend fun insertSubscription(subscription: Subscription)
     suspend fun updateSubscription(subscription: Subscription)
     suspend fun deleteSubscription(subscription: Subscription)
-    suspend fun updateExpiredSubscriptions()
 }
 
 class SubscriptionRepositoryImpl(private val subscriptionDao: SubscriptionDao) :
     SubscriptionRepository {
     override fun getAllSubscriptions(): Flow<List<Subscription>> {
         return subscriptionDao.getAllSubscriptions()
+    }
+
+    override suspend fun getAllSubscriptionsSnapshot(): List<Subscription> {
+        return subscriptionDao.getAllSubscriptionsSnapshot()
     }
 
     override suspend fun getSubscriptionById(id: Int): Subscription? {
@@ -33,15 +37,5 @@ class SubscriptionRepositoryImpl(private val subscriptionDao: SubscriptionDao) :
 
     override suspend fun deleteSubscription(subscription: Subscription) {
         subscriptionDao.deleteSubscription(subscription)
-    }
-
-    override suspend fun updateExpiredSubscriptions() {
-        val activeSubscriptions = subscriptionDao.getActiveSubscriptions()
-        activeSubscriptions.forEach { subscription ->
-            val updatedSubscription = subscription.markAsExpiredIfNeeded()
-            if (updatedSubscription != subscription) {
-                subscriptionDao.updateSubscription(updatedSubscription)
-            }
-        }
     }
 }

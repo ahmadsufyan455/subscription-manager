@@ -144,7 +144,7 @@ fun SubscriptionCard(
                             Column {
                                 val billingCycle = when (subscription.billingCycle) {
                                     BillingCycle.MONTHLY -> "Month"
-                                    BillingCycle.QUARTERLY -> "Quartile"
+                                    BillingCycle.QUARTERLY -> "Quarter"
                                     BillingCycle.YEARLY -> "Year"
                                 }
                                 Text(

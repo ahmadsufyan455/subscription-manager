@@ -2,6 +2,7 @@ package com.zerodev.subscriptionmanager
 
 
 import android.app.Application
+import com.zerodev.subscriptionmanager.utils.RenewalScheduler
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.logger.AndroidLogger
 import org.koin.core.context.startKoin
@@ -22,5 +23,7 @@ class SubscriptionManagerApp : Application() {
             androidContext(this@SubscriptionManagerApp)
             modules(appModules)
         }
+
+        RenewalScheduler.scheduleRenewalCheck(this)
     }
 }
