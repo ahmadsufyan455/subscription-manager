@@ -205,9 +205,10 @@ private fun HomeContent(
                 }
 
                 item {
+                    val upcomingSpace = if (upcomingSubscriptions.size == 1) 150 else 75
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
-                        modifier = Modifier.height((upcomingSubscriptions.size * 75).dp),
+                        modifier = Modifier.height((upcomingSubscriptions.size * upcomingSpace).dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {

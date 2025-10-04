@@ -74,10 +74,6 @@ class HomeViewModel(private val repository: SubscriptionRepository) : ViewModel(
             }
     }
 
-    fun refreshSubscriptions() {
-        loadSubscriptions()
-    }
-
     fun addSubscription(subscription: Subscription) {
         viewModelScope.launch {
             try {
