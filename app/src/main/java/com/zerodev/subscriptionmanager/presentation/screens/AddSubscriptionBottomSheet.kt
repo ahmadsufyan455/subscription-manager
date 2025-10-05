@@ -37,12 +37,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.zerodev.subscriptionmanager.core.utils.validateFormInput
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.components.DatePickerField
 import com.zerodev.subscriptionmanager.ui.components.GlobalTextField
-import com.zerodev.subscriptionmanager.core.utils.validateFormInput
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -187,10 +187,11 @@ fun AddSubscriptionBottomSheet(
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.Medium
                         )
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Every ${cycle.daysInCycle} days",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     }
                 }

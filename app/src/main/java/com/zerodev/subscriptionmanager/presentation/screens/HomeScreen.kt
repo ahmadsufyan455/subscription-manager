@@ -174,7 +174,7 @@ private fun HomeContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    top = paddingValues.calculateTopPadding() - 34.dp,
+                    top = paddingValues.calculateTopPadding() - 24.dp,
                     bottom = paddingValues.calculateBottomPadding(),
                     start = 16.dp,
                     end = 16.dp
@@ -321,7 +321,8 @@ private fun SummaryCard(
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+            contentColor = MaterialTheme.colorScheme.onSurface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -335,13 +336,11 @@ private fun SummaryCard(
                 text = value,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -352,7 +351,7 @@ private fun EmptyStateCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = MaterialTheme.colorScheme.surface,
         )
     ) {
         Column(
@@ -379,9 +378,10 @@ private fun EmptyStateCard() {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "Tap the + button to add your first subscription",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }

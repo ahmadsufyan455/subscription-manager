@@ -1,11 +1,13 @@
 package com.zerodev.subscriptionmanager.ui.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,7 +26,9 @@ fun GlobalTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     isError: Boolean = false,
     errorMessage: String? = null,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    readOnly: Boolean = false,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
     OutlinedTextField(
         value = value,
@@ -41,6 +45,8 @@ fun GlobalTextField(
         isError = isError,
         supportingText = errorMessage?.let { { Text(it) } },
         shape = RoundedCornerShape(12.dp),
-        singleLine = singleLine
+        singleLine = singleLine,
+        readOnly = readOnly,
+        interactionSource = interactionSource
     )
 }

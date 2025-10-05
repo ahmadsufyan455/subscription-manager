@@ -1,5 +1,7 @@
 package com.zerodev.subscriptionmanager.ui.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.DatePicker
@@ -7,12 +9,12 @@ import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +35,15 @@ fun DatePickerField(
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDate)
+    val interactionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            if (interaction is PressInteraction.Release) {
+                showDatePicker = true
+            }
+        }
+    }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -84,14 +95,14 @@ fun DatePickerField(
         label = label,
         modifier = modifier,
         leadingIcon = {
-            IconButton(onClick = { showDatePicker = true }) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Select date"
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.DateRange,
+                contentDescription = "Select date"
+            )
         },
         isError = false,
-        errorMessage = null
+        errorMessage = null,
+        readOnly = true,
+        interactionSource = interactionSource
     )
 }

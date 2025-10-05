@@ -13,3 +13,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+gradle.properties
+
+# 🔒 Keystore and signing files
+*.jks
+*.keystore
+**/release/*.jks
+**/release/*.keystore
+
+app/release/
+app/build/outputs/apk/release/
+app/build/outputs/bundle/release/
