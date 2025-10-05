@@ -13,6 +13,6 @@ fun getSubscriptionIcon(subscriptionName: String): Int {
         subscriptionName.contains("shopee", ignoreCase = true) -> R.drawable.shopee
         subscriptionName.contains("spotify", ignoreCase = true) -> R.drawable.spotify
         subscriptionName.contains("youtube", ignoreCase = true) -> R.drawable.youtube
-        else -> R.drawable.claude // default icon
+        else -> R.drawable.subtrack // default icon
     }
 }
