@@ -50,17 +50,31 @@ data class Subscription(
     fun isActive(): Boolean = status == SubscriptionStatus.ACTIVE
 
     fun getNextBillingDate(): Long? {
-        if (status != SubscriptionStatus.ACTIVE && status != SubscriptionStatus.CANCELLED) return null
+        return when (status) {
+            SubscriptionStatus.ACTIVE -> {
+                var nextDate = billingCycle.getNextBillingDate(startDate)
+                val currentTime = System.currentTimeMillis()
 
-        var nextDate = billingCycle.getNextBillingDate(startDate)
-        val currentTime = System.currentTimeMillis()
+                // Keep advancing until we find a future date
+                while (nextDate <= currentTime) {
+                    nextDate = billingCycle.getNextBillingDate(nextDate)
+                }
 
-        // Keep advancing until we find a future date
-        while (nextDate <= currentTime) {
-            nextDate = billingCycle.getNextBillingDate(nextDate)
+                nextDate
+            }
+
+            SubscriptionStatus.CANCELLED -> {
+                // A cancelled subscription remains active until the end of the
+                // current billing period. Returning the immediate next billing
+                // date (without advancing past it) ensures that
+                // [RenewalHelper] can mark it as expired once that period ends
+                // instead of incorrectly pushing the renewal far into the
+                // future.
+                billingCycle.getNextBillingDate(startDate)
+            }
+
+            SubscriptionStatus.EXPIRED -> null
         }
-
-        return nextDate
     }
 
     fun getCurrentBillingPeriodStart(): Long {
