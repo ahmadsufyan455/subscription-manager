@@ -77,7 +77,7 @@ fun UpcomingCard(
                     Column {
                         val billingCycle = when (subscription.billingCycle) {
                             BillingCycle.MONTHLY -> "Month"
-                            BillingCycle.QUARTERLY -> "Quarter"
+                            BillingCycle.WEEKLY -> "Week"
                             BillingCycle.YEARLY -> "Year"
                         }
                         Text(

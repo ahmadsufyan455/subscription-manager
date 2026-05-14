@@ -71,7 +71,7 @@ class HomeViewModel(
             .sumOf { subscription ->
                 when (subscription.billingCycle) {
                     BillingCycle.MONTHLY -> subscription.price
-                    BillingCycle.QUARTERLY -> subscription.price / 3
+                    BillingCycle.WEEKLY -> subscription.price * 4
                     BillingCycle.YEARLY -> subscription.price / 12
                 }
             }

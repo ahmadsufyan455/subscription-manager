@@ -5,8 +5,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 enum class BillingCycle(val displayName: String, val daysInCycle: Int) {
+    WEEKLY("Weekly", 7),
     MONTHLY("Monthly", 30),
-    QUARTERLY("Quarterly", 90),
     YEARLY("Yearly", 365);
 
     fun getNextBillingDate(startDate: Long): Long {
