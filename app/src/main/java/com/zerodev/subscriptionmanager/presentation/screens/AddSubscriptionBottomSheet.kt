@@ -87,9 +87,11 @@ fun AddSubscriptionBottomSheet(
 
     var nameError by remember { mutableStateOf<String?>(null) }
     var priceError by remember { mutableStateOf<String?>(null) }
+    var customDaysError by remember { mutableStateOf<String?>(null) }
 
     val isButtonEnable = name.isNotBlank() && price.isNotBlank() &&
-        (selectedBillingCycle != BillingCycle.CUSTOM || customDays.isNotBlank())
+        (selectedBillingCycle != BillingCycle.CUSTOM ||
+            (customDays.toIntOrNull()?.let { it in 1..365 } == true))
 
     Column(
         modifier = Modifier
@@ -195,7 +197,10 @@ fun AddSubscriptionBottomSheet(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = if (cycle == BillingCycle.CUSTOM) "Set your own cycle" else "Every ${cycle.daysInCycle} days",
+                            text = if (cycle == BillingCycle.CUSTOM) {
+                                val days = customDays.toIntOrNull()
+                                if (days != null && days > 0) "Every $days days" else "Set your own cycle"
+                            } else "Every ${cycle.daysInCycle} days",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
@@ -207,7 +212,16 @@ fun AddSubscriptionBottomSheet(
         if (selectedBillingCycle == BillingCycle.CUSTOM) {
             GlobalTextField(
                 value = customDays,
-                onValueChange = { customDays = it },
+                onValueChange = { input ->
+                    customDays = input.filter { it.isDigit() }
+                    val days = customDays.toIntOrNull()
+                    customDaysError = when {
+                        customDays.isBlank() -> null
+                        days == null || days < 1 -> "Must be at least 1 day"
+                        days > 365 -> "Must be 365 days or less"
+                        else -> null
+                    }
+                },
                 label = "Number of Days",
                 placeholder = "e.g., 3, 7, 14",
                 modifier = Modifier.fillMaxWidth(),
@@ -215,8 +229,20 @@ fun AddSubscriptionBottomSheet(
                 imeAction = ImeAction.Done,
                 keyboardActions = KeyboardActions(
                     onDone = { focusManager.clearFocus() }
-                )
+                ),
+                isError = customDaysError != null,
+                errorMessage = customDaysError
             )
+
+            val days = customDays.toIntOrNull()
+            if (days != null && days in 1..365) {
+                Text(
+                    text = "Renews every $days day${if (days > 1) "s" else ""}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
