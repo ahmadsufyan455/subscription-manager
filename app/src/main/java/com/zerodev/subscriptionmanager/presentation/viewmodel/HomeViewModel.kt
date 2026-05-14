@@ -73,6 +73,10 @@ class HomeViewModel(
                     BillingCycle.MONTHLY -> subscription.price
                     BillingCycle.WEEKLY -> subscription.price * 4
                     BillingCycle.YEARLY -> subscription.price / 12
+                    BillingCycle.CUSTOM -> {
+                        val days = subscription.customCycleDays ?: 30
+                        subscription.price * (30.0 / days)
+                    }
                 }
             }
     }

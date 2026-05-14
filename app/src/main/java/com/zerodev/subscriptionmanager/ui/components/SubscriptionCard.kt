@@ -146,6 +146,7 @@ fun SubscriptionCard(
                                     BillingCycle.MONTHLY -> "Month"
                                     BillingCycle.WEEKLY -> "Week"
                                     BillingCycle.YEARLY -> "Year"
+                                    BillingCycle.CUSTOM -> "${subscription.customCycleDays ?: 0} Days"
                                 }
                                 Text(
                                     text = "$${

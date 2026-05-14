@@ -16,7 +16,7 @@ val databaseModule = module {
             androidContext(),
             SubscriptionDatabase::class.java,
             "subscription_manager.db",
-        ).build()
+        ).addMigrations(SubscriptionDatabase.MIGRATION_1_2).build()
     }
 }
 

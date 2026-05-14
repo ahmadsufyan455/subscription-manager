@@ -7,10 +7,12 @@ import androidx.room.PrimaryKey
 enum class BillingCycle(val displayName: String, val daysInCycle: Int) {
     WEEKLY("Weekly", 7),
     MONTHLY("Monthly", 30),
-    YEARLY("Yearly", 365);
+    YEARLY("Yearly", 365),
+    CUSTOM("Custom", 0);
 
-    fun getNextBillingDate(startDate: Long): Long {
-        return startDate + (daysInCycle * 24 * 60 * 60 * 1000L)
+    fun getNextBillingDate(startDate: Long, customDays: Int? = null): Long {
+        val days = if (this == CUSTOM) (customDays ?: 0) else daysInCycle
+        return startDate + (days * 24 * 60 * 60 * 1000L)
     }
 }
 
@@ -35,6 +37,9 @@ data class Subscription(
     @ColumnInfo(name = "billing_cycle")
     val billingCycle: BillingCycle,
 
+    @ColumnInfo(name = "custom_cycle_days")
+    val customCycleDays: Int? = null,
+
     @ColumnInfo(name = "start_date")
     val startDate: Long,
 
@@ -52,12 +57,12 @@ data class Subscription(
     fun getNextBillingDate(): Long? {
         return when (status) {
             SubscriptionStatus.ACTIVE -> {
-                var nextDate = billingCycle.getNextBillingDate(startDate)
+                var nextDate = billingCycle.getNextBillingDate(startDate, customCycleDays)
                 val currentTime = System.currentTimeMillis()
 
                 // Keep advancing until we find a future date
                 while (nextDate <= currentTime) {
-                    nextDate = billingCycle.getNextBillingDate(nextDate)
+                    nextDate = billingCycle.getNextBillingDate(nextDate, customCycleDays)
                 }
 
                 nextDate
@@ -70,7 +75,7 @@ data class Subscription(
                 // [RenewalHelper] can mark it as expired once that period ends
                 // instead of incorrectly pushing the renewal far into the
                 // future.
-                billingCycle.getNextBillingDate(startDate)
+                billingCycle.getNextBillingDate(startDate, customCycleDays)
             }
 
             SubscriptionStatus.EXPIRED -> null
@@ -82,8 +87,8 @@ data class Subscription(
         val currentTime = System.currentTimeMillis()
 
         // Advance to current period
-        while (billingCycle.getNextBillingDate(periodStart) <= currentTime) {
-            periodStart = billingCycle.getNextBillingDate(periodStart)
+        while (billingCycle.getNextBillingDate(periodStart, customCycleDays) <= currentTime) {
+            periodStart = billingCycle.getNextBillingDate(periodStart, customCycleDays)
         }
 
         return periodStart

@@ -74,6 +74,11 @@ fun AddSubscriptionBottomSheet(
             existingSubscription?.billingCycle ?: BillingCycle.MONTHLY
         )
     }
+    var customDays by remember(existingSubscription) {
+        mutableStateOf(
+            existingSubscription?.customCycleDays?.toString() ?: ""
+        )
+    }
     var startDate by remember(existingSubscription) {
         mutableLongStateOf(
             existingSubscription?.startDate ?: System.currentTimeMillis()
@@ -83,7 +88,8 @@ fun AddSubscriptionBottomSheet(
     var nameError by remember { mutableStateOf<String?>(null) }
     var priceError by remember { mutableStateOf<String?>(null) }
 
-    val isButtonEnable = name.isNotBlank() && price.isNotBlank()
+    val isButtonEnable = name.isNotBlank() && price.isNotBlank() &&
+        (selectedBillingCycle != BillingCycle.CUSTOM || customDays.isNotBlank())
 
     Column(
         modifier = Modifier
@@ -189,7 +195,7 @@ fun AddSubscriptionBottomSheet(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Every ${cycle.daysInCycle} days",
+                            text = if (cycle == BillingCycle.CUSTOM) "Set your own cycle" else "Every ${cycle.daysInCycle} days",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
@@ -198,20 +204,35 @@ fun AddSubscriptionBottomSheet(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        if (selectedBillingCycle == BillingCycle.CUSTOM) {
+            GlobalTextField(
+                value = customDays,
+                onValueChange = { customDays = it },
+                label = "Number of Days",
+                placeholder = "e.g., 3, 7, 14",
+                modifier = Modifier.fillMaxWidth(),
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done,
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                )
+            )
+        }
 
-        // Add/Update Button
+        Spacer(modifier = Modifier.height(16.dp))
         Button(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
             onClick = {
                 if (validateFormInput(name, price, { nameError = it }, { priceError = it })) {
+                    val cycleDays = if (selectedBillingCycle == BillingCycle.CUSTOM) customDays.toIntOrNull() else null
                     if (isEditMode && existingSubscription != null) {
                         val updatedSubscription = existingSubscription.copy(
                             name = name.trim(),
                             price = price.toDouble(),
                             billingCycle = selectedBillingCycle,
+                            customCycleDays = cycleDays,
                             startDate = startDate
                         )
                         viewModel.updateSubscription(updatedSubscription)
@@ -220,6 +241,7 @@ fun AddSubscriptionBottomSheet(
                             name = name.trim(),
                             price = price.toDouble(),
                             billingCycle = selectedBillingCycle,
+                            customCycleDays = cycleDays,
                             startDate = startDate
                         )
                         viewModel.addSubscription(subscription)
