@@ -97,8 +97,10 @@ data class Subscription(
     fun getRemainingDays(): Int? {
         if (!isActive()) return null
         val nextBilling = getNextBillingDate() ?: return null
-        val daysLeft = (nextBilling - System.currentTimeMillis()) / (24 * 60 * 60 * 1000)
-        return daysLeft.toInt().coerceAtLeast(0)
+        val millisLeft = nextBilling - System.currentTimeMillis()
+        if (millisLeft <= 0) return 0
+        val dayMillis = 24 * 60 * 60 * 1000L
+        return ((millisLeft + dayMillis - 1) / dayMillis).toInt()
     }
 
     fun needsRenewal(): Boolean {
