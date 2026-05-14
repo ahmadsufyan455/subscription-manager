@@ -35,12 +35,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
 import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
 import com.zerodev.subscriptionmanager.core.utils.validateFormInput
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
@@ -59,6 +61,8 @@ fun AddSubscriptionBottomSheet(
     subscriptionId: Int? = null,
 ) {
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    val currency = remember { CurrencyFormatter.getSelectedCurrency(context) }
     val uiState by viewModel.uiState.collectAsState()
 
     val existingSubscription = remember(subscriptionId, uiState.subscriptions) {
@@ -68,9 +72,12 @@ fun AddSubscriptionBottomSheet(
     }
 
     var name by remember(existingSubscription) { mutableStateOf(existingSubscription?.name ?: "") }
-    var price by remember(existingSubscription) {
+    var price by remember(existingSubscription, currency) {
         mutableStateOf(
-            existingSubscription?.price?.toString() ?: ""
+            existingSubscription?.let {
+                val converted = CurrencyFormatter.convertFromUsd(it.price, currency)
+                if (converted % 1.0 == 0.0) converted.toLong().toString() else converted.toString()
+            } ?: ""
         )
     }
     var selectedBillingCycle by remember(existingSubscription) {
@@ -156,7 +163,7 @@ fun AddSubscriptionBottomSheet(
             },
             label = "Price",
             placeholder = "0.00",
-            leadingIcon = { Text("$") },
+            leadingIcon = { Text(currency.symbol) },
             modifier = Modifier.fillMaxWidth(),
             keyboardType = KeyboardType.Decimal,
             imeAction = ImeAction.Done,
@@ -272,10 +279,11 @@ fun AddSubscriptionBottomSheet(
             onClick = {
                 if (validateFormInput(name, price, { nameError = it }, { priceError = it })) {
                     val cycleDays = if (selectedBillingCycle == BillingCycle.CUSTOM) customDays.toIntOrNull() else null
+                    val priceInUsd = CurrencyFormatter.convertToUsd(price.toDouble(), currency)
                     if (isEditMode && existingSubscription != null) {
                         val updatedSubscription = existingSubscription.copy(
                             name = name.trim(),
-                            price = price.toDouble(),
+                            price = priceInUsd,
                             billingCycle = selectedBillingCycle,
                             customCycleDays = cycleDays,
                             startDate = startDate
@@ -284,7 +292,7 @@ fun AddSubscriptionBottomSheet(
                     } else {
                         val subscription = Subscription(
                             name = name.trim(),
-                            price = price.toDouble(),
+                            price = priceInUsd,
                             billingCycle = selectedBillingCycle,
                             customCycleDays = cycleDays,
                             startDate = startDate

@@ -43,8 +43,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeUiState
@@ -53,7 +55,6 @@ import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
 import com.zerodev.subscriptionmanager.ui.components.UpcomingCard
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -185,7 +186,7 @@ private fun HomeContent(
             // Summary Cards
             item {
                 SummarySection(
-                    totalMonthlySpending = uiState.totalMonthlySpending,
+                    totalSpending = uiState.totalSpending,
                     activeSubscriptionsCount = uiState.activeSubscriptionsCount
                 )
             }
@@ -292,16 +293,19 @@ private fun HomeContent(
 
 @Composable
 private fun SummarySection(
-    totalMonthlySpending: Double,
+    totalSpending: Double,
     activeSubscriptionsCount: Int
 ) {
+    val context = LocalContext.current
+    val currency = remember { CurrencyFormatter.getSelectedCurrency(context) }
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         SummaryCard(
-            title = "Monthly Spending",
-            value = "$${String.format(Locale.US, "%.0f", totalMonthlySpending)}",
+            title = "Total Spending",
+            value = CurrencyFormatter.formatCompact(totalSpending, currency),
             modifier = Modifier.weight(1f)
         )
         SummaryCard(

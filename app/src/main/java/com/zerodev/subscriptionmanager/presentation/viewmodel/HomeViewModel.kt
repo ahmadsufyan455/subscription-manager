@@ -3,7 +3,6 @@ package com.zerodev.subscriptionmanager.presentation.viewmodel
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
@@ -19,7 +18,7 @@ data class HomeUiState(
     val subscriptions: List<Subscription> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val totalMonthlySpending: Double = 0.0,
+    val totalSpending: Double = 0.0,
     val activeSubscriptionsCount: Int = 0
 )
 
@@ -58,27 +57,17 @@ class HomeViewModel(
                         subscriptions = subscriptions,
                         isLoading = false,
                         error = null,
-                        totalMonthlySpending = calculateTotalMonthlySpending(subscriptions),
+                        totalSpending = calculateTotalSpending(subscriptions),
                         activeSubscriptionsCount = subscriptions.count { it.status == SubscriptionStatus.ACTIVE }
                     )
                 }
         }
     }
 
-    private fun calculateTotalMonthlySpending(subscriptions: List<Subscription>): Double {
+    private fun calculateTotalSpending(subscriptions: List<Subscription>): Double {
         return subscriptions
             .filter { it.status == SubscriptionStatus.ACTIVE }
-            .sumOf { subscription ->
-                when (subscription.billingCycle) {
-                    BillingCycle.MONTHLY -> subscription.price
-                    BillingCycle.WEEKLY -> subscription.price * 4
-                    BillingCycle.YEARLY -> subscription.price / 12
-                    BillingCycle.CUSTOM -> {
-                        val days = subscription.customCycleDays ?: 30
-                        subscription.price * (30.0 / days)
-                    }
-                }
-            }
+            .sumOf { it.price }
     }
 
     fun addSubscription(subscription: Subscription) {

@@ -16,8 +16,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -27,14 +29,17 @@ import androidx.compose.ui.unit.dp
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
+import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
 import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
-import java.util.Locale
 
 @Composable
 fun UpcomingCard(
     subscription: Subscription,
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val currency = remember { CurrencyFormatter.getSelectedCurrency(context) }
+
     Box(modifier = Modifier.fillMaxWidth()) {
         Card(
             modifier = Modifier
@@ -82,13 +87,7 @@ fun UpcomingCard(
                             BillingCycle.CUSTOM -> "${subscription.customCycleDays ?: 0} Days"
                         }
                         Text(
-                            text = "$${
-                                String.format(
-                                    Locale.US,
-                                    "%.0f",
-                                    subscription.price
-                                )
-                            }",
+                            text = CurrencyFormatter.format(subscription.price, currency),
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
