@@ -1,27 +1,31 @@
 package com.zerodev.subscriptionmanager.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,14 +33,15 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
 import com.zerodev.subscriptionmanager.core.utils.validateFormInput
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
@@ -45,7 +50,7 @@ import com.zerodev.subscriptionmanager.ui.components.DatePickerField
 import com.zerodev.subscriptionmanager.ui.components.GlobalTextField
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddSubscriptionBottomSheet(
     onDismiss: () -> Unit,
@@ -56,7 +61,6 @@ fun AddSubscriptionBottomSheet(
     val focusManager = LocalFocusManager.current
     val uiState by viewModel.uiState.collectAsState()
 
-    // Find subscription if in edit mode
     val existingSubscription = remember(subscriptionId, uiState.subscriptions) {
         subscriptionId?.let { id ->
             uiState.subscriptions.find { it.id == id }
@@ -88,6 +92,7 @@ fun AddSubscriptionBottomSheet(
     var nameError by remember { mutableStateOf<String?>(null) }
     var priceError by remember { mutableStateOf<String?>(null) }
     var customDaysError by remember { mutableStateOf<String?>(null) }
+    var showCancelConfirmation by remember { mutableStateOf(false) }
 
     val isButtonEnable = name.isNotBlank() && price.isNotBlank() &&
         (selectedBillingCycle != BillingCycle.CUSTOM ||
@@ -98,9 +103,30 @@ fun AddSubscriptionBottomSheet(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Service Name Field
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = if (isEditMode) "Edit Subscription" else "Add Subscription",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = if (isEditMode) "Update your subscription details" else "Track a new subscription",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "Details",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+
         GlobalTextField(
             value = name,
             onValueChange = {
@@ -110,11 +136,18 @@ fun AddSubscriptionBottomSheet(
             label = "Service Name",
             placeholder = "e.g., Netflix, Spotify",
             modifier = Modifier.fillMaxWidth(),
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = getSubscriptionIcon(name)),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Unspecified
+                )
+            },
             isError = nameError != null,
             errorMessage = nameError
         )
 
-        // Price Field
         GlobalTextField(
             value = price,
             onValueChange = {
@@ -134,7 +167,18 @@ fun AddSubscriptionBottomSheet(
             errorMessage = priceError
         )
 
-        // Start Date Picker
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 4.dp),
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+        )
+
+        Text(
+            text = "Schedule",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+
         DatePickerField(
             selectedDate = startDate,
             onDateSelected = { startDate = it },
@@ -142,70 +186,41 @@ fun AddSubscriptionBottomSheet(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Billing Cycle Selection
         Text(
             text = "Billing Cycle",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
         )
 
-        BillingCycle.entries.forEach { cycle ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .selectable(
-                        selected = selectedBillingCycle == cycle,
-                        onClick = { selectedBillingCycle = cycle },
-                        role = Role.RadioButton
-                    ),
-                colors = CardDefaults.cardColors(
-                    MaterialTheme.colorScheme.surface
-                ),
-                border = BorderStroke(
-                    width = 2.dp,
-                    color = if (selectedBillingCycle == cycle) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    }
-                ),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = if (selectedBillingCycle == cycle) 4.dp else 1.dp
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = if (selectedBillingCycle == cycle) MaterialTheme.colorScheme.primary.copy(
-                                alpha = 0.1f
-                            ) else MaterialTheme.colorScheme.surface
-                        )
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    RadioButton(
-                        selected = selectedBillingCycle == cycle,
-                        onClick = null
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            BillingCycle.entries.forEach { cycle ->
+                FilterChip(
+                    selected = selectedBillingCycle == cycle,
+                    onClick = { selectedBillingCycle = cycle },
+                    label = {
                         Text(
                             text = cycle.displayName,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = if (selectedBillingCycle == cycle) FontWeight.Bold else FontWeight.Normal
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = if (cycle == BillingCycle.CUSTOM) {
-                                val days = customDays.toIntOrNull()
-                                if (days != null && days > 0) "Every $days days" else "Set your own cycle"
-                            } else "Every ${cycle.daysInCycle} days",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        )
-                    }
-                }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(
+                        width = if (selectedBillingCycle == cycle) 2.dp else 1.dp,
+                        color = if (selectedBillingCycle == cycle) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                        }
+                    ),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        selectedLabelColor = MaterialTheme.colorScheme.primary
+                    )
+                )
             }
         }
 
@@ -245,7 +260,11 @@ fun AddSubscriptionBottomSheet(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 4.dp),
+            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+        )
+
         Button(
             modifier = Modifier
                 .fillMaxWidth()
@@ -287,24 +306,19 @@ fun AddSubscriptionBottomSheet(
             )
         }
 
-        if (isEditMode && existingSubscription != null)
-            Button(
+        if (isEditMode && existingSubscription != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                onClick = {
-                    val updatedSubscription = existingSubscription.copy(
-                        name = name.trim(),
-                        price = price.toDouble(),
-                        billingCycle = selectedBillingCycle,
-                        startDate = startDate
-                    )
-                    viewModel.cancelSubscription(updatedSubscription)
-                    onDismiss()
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+                onClick = { showCancelConfirmation = true },
+                border = BorderStroke(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.error
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
                 )
             ) {
                 Text(
@@ -313,7 +327,48 @@ fun AddSubscriptionBottomSheet(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
+    }
+
+    if (showCancelConfirmation && existingSubscription != null) {
+        AlertDialog(
+            onDismissRequest = { showCancelConfirmation = false },
+            title = {
+                Text(
+                    text = "Cancel Subscription",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("Are you sure you want to cancel ${existingSubscription.name}? This will stop future renewals.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val updatedSubscription = existingSubscription.copy(
+                            name = name.trim(),
+                            price = price.toDouble(),
+                            billingCycle = selectedBillingCycle,
+                            startDate = startDate
+                        )
+                        viewModel.cancelSubscription(updatedSubscription)
+                        showCancelConfirmation = false
+                        onDismiss()
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Cancel Subscription", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelConfirmation = false }) {
+                    Text("Keep Active")
+                }
+            }
+        )
     }
 }
