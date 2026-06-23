@@ -1,6 +1,7 @@
 package com.zerodev.subscriptionmanager.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -102,8 +103,8 @@ fun AddSubscriptionBottomSheet(
     var showCancelConfirmation by remember { mutableStateOf(false) }
 
     val isButtonEnable = name.isNotBlank() && price.isNotBlank() &&
-        (selectedBillingCycle != BillingCycle.CUSTOM ||
-            (customDays.toIntOrNull()?.let { it in 1..365 } == true))
+            (selectedBillingCycle != BillingCycle.CUSTOM ||
+                    (customDays.toIntOrNull()?.let { it in 1..365 } == true))
 
     Column(
         modifier = Modifier
@@ -278,7 +279,8 @@ fun AddSubscriptionBottomSheet(
                 .height(56.dp),
             onClick = {
                 if (validateFormInput(name, price, { nameError = it }, { priceError = it })) {
-                    val cycleDays = if (selectedBillingCycle == BillingCycle.CUSTOM) customDays.toIntOrNull() else null
+                    val cycleDays =
+                        if (selectedBillingCycle == BillingCycle.CUSTOM) customDays.toIntOrNull() else null
                     val priceInUsd = CurrencyFormatter.convertToUsd(price.toDouble(), currency)
                     if (isEditMode && existingSubscription != null) {
                         val updatedSubscription = existingSubscription.copy(
@@ -315,7 +317,7 @@ fun AddSubscriptionBottomSheet(
         }
 
         if (isEditMode && existingSubscription != null) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(1.dp))
             OutlinedButton(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -342,6 +344,7 @@ fun AddSubscriptionBottomSheet(
 
     if (showCancelConfirmation && existingSubscription != null) {
         AlertDialog(
+            containerColor = MaterialTheme.colorScheme.surface,
             onDismissRequest = { showCancelConfirmation = false },
             title = {
                 Text(
@@ -350,7 +353,10 @@ fun AddSubscriptionBottomSheet(
                 )
             },
             text = {
-                Text("Are you sure you want to cancel ${existingSubscription.name}? This will stop future renewals.")
+                Text(
+                    "Are you sure you want to cancel ${existingSubscription.name}? This will stop future renewals.",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
             },
             confirmButton = {
                 TextButton(
