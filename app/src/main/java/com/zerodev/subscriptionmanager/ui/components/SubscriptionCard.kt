@@ -102,9 +102,9 @@ fun SubscriptionCard(
                             ) {
                                 Icon(
                                     modifier = Modifier
-                                        .width(60.dp)
-                                        .height(60.dp)
-                                        .padding(8.dp),
+                                        .width(40.dp)
+                                        .height(40.dp)
+                                        .padding(4.dp),
                                     painter = painterResource(getSubscriptionIcon(subscription.name)),
                                     contentDescription = "Subscription Icon",
                                     tint = Color.Unspecified
