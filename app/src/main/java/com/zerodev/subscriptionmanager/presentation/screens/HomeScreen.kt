@@ -1,5 +1,6 @@
 package com.zerodev.subscriptionmanager.presentation.screens
 
+import com.zerodev.subscriptionmanager.ui.components.SpendingChart
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -189,7 +190,7 @@ private fun HomeContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    top = paddingValues.calculateTopPadding(),
+                    top = paddingValues.calculateTopPadding() - 32.dp,
                     bottom = paddingValues.calculateBottomPadding(),
                     start = 16.dp,
                     end = 16.dp
@@ -197,6 +198,9 @@ private fun HomeContent(
             contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
+            item {
+                SpendingChart(subscriptions = uiState.subscriptions)
+            }
             // Summary Cards
             item {
                 SummarySection(
