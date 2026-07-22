@@ -1,12 +1,10 @@
 package com.zerodev.subscriptionmanager.presentation.screens
 
-import com.zerodev.subscriptionmanager.ui.components.SpendingChart
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,9 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
@@ -45,10 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeUiState
@@ -56,6 +49,7 @@ import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.components.AppHeaderActions
 import com.zerodev.subscriptionmanager.ui.components.AppHeaderNavIcon
 import com.zerodev.subscriptionmanager.ui.components.AppHeaderTitle
+import com.zerodev.subscriptionmanager.ui.components.SpendingChart
 import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
 import com.zerodev.subscriptionmanager.ui.components.UpcomingCard
 import com.zerodev.subscriptionmanager.ui.theme.DarkBackground
@@ -201,46 +195,22 @@ private fun HomeContent(
             item {
                 SpendingChart(subscriptions = uiState.subscriptions)
             }
-            // Summary Cards
-            item {
-                SummarySection(
-                    totalSpending = uiState.totalSpending,
-                    activeSubscriptionsCount = uiState.activeSubscriptionsCount
-                )
-            }
 
-            // Upcoming Subscriptions Grid
+            // Upcoming Subscriptions
             val upcomingSubscriptions = uiState.subscriptions
                 .filter { (it.getRemainingDays() ?: Int.MAX_VALUE) <= 7 }
                 .sortedWith(compareBy({ it.getRemainingDays() ?: Int.MAX_VALUE }, { it.createdAt }))
                 .take(2)
 
-            if (upcomingSubscriptions.isNotEmpty()) {
+            val upcomingSubscription = upcomingSubscriptions.firstOrNull()
+            if (upcomingSubscription != null) {
                 item {
-                    Text(
-                        text = "Upcoming Payments",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                item {
-                    val upcomingSpace = if (upcomingSubscriptions.size == 1) 150 else 75
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        modifier = Modifier.height((upcomingSubscriptions.size * upcomingSpace).dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(upcomingSubscriptions) { subscription ->
-                            UpcomingCard(
-                                subscription = subscription,
-                                onClick = {
-                                    onEditSubscription(subscription.id)
-                                }
-                            )
+                    UpcomingCard(
+                        subscription = upcomingSubscription,
+                        onClick = {
+                            onEditSubscription(upcomingSubscription.id)
                         }
-                    }
+                    )
                 }
             }
 
@@ -306,65 +276,6 @@ private fun HomeContent(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = contentPadding.calculateBottomPadding())
         )
-    }
-}
-
-@Composable
-private fun SummarySection(
-    totalSpending: Double,
-    activeSubscriptionsCount: Int
-) {
-    val context = LocalContext.current
-    val currency = remember { CurrencyFormatter.getSelectedCurrency(context) }
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        SummaryCard(
-            title = "Total Spending",
-            value = CurrencyFormatter.formatCompact(totalSpending, currency),
-            modifier = Modifier.weight(1f)
-        )
-        SummaryCard(
-            title = "Active Subscriptions",
-            value = activeSubscriptionsCount.toString(),
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun SummaryCard(
-    title: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-            contentColor = MaterialTheme.colorScheme.onSurface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
     }
 }
 
