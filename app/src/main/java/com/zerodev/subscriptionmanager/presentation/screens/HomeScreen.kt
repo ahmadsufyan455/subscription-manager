@@ -31,6 +31,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,8 +52,12 @@ import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeUiState
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
+import com.zerodev.subscriptionmanager.ui.components.AppHeaderActions
+import com.zerodev.subscriptionmanager.ui.components.AppHeaderNavIcon
+import com.zerodev.subscriptionmanager.ui.components.AppHeaderTitle
 import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
 import com.zerodev.subscriptionmanager.ui.components.UpcomingCard
+import com.zerodev.subscriptionmanager.ui.theme.DarkBackground
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -111,13 +116,22 @@ fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DarkBackground
+                ),
                 title = {
-                    Text(
-                        text = "Subscription Manager",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
+                    AppHeaderTitle()
                 },
+                navigationIcon = {
+                    AppHeaderNavIcon()
+                },
+                actions = {
+                    AppHeaderActions(
+                        onClick = {
+                            // TODO: Navigate to Notification Screen
+                        }
+                    )
+                }
             )
         }
     ) { paddingValues ->
@@ -175,7 +189,7 @@ private fun HomeContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    top = paddingValues.calculateTopPadding() - 24.dp,
+                    top = paddingValues.calculateTopPadding(),
                     bottom = paddingValues.calculateBottomPadding(),
                     start = 16.dp,
                     end = 16.dp
