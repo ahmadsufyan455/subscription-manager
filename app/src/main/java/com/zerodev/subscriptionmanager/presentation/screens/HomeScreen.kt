@@ -1,10 +1,12 @@
 package com.zerodev.subscriptionmanager.presentation.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,7 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -190,17 +192,17 @@ private fun HomeContent(
                     end = 16.dp
                 ),
             contentPadding = contentPadding,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item {
                 SpendingChart(subscriptions = uiState.subscriptions)
+                Spacer(modifier = Modifier.height(20.dp))
             }
 
             // Upcoming Subscriptions
             val upcomingSubscriptions = uiState.subscriptions
                 .filter { (it.getRemainingDays() ?: Int.MAX_VALUE) <= 7 }
                 .sortedWith(compareBy({ it.getRemainingDays() ?: Int.MAX_VALUE }, { it.createdAt }))
-                .take(2)
+                .take(1)
 
             val upcomingSubscription = upcomingSubscriptions.firstOrNull()
             if (upcomingSubscription != null) {
@@ -211,16 +213,32 @@ private fun HomeContent(
                             onEditSubscription(upcomingSubscription.id)
                         }
                     )
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
             }
 
             if (uiState.subscriptions.isNotEmpty()) {
                 item {
-                    Text(
-                        text = "My Subscriptions",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Active Subscriptions",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "See All",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable(
+                                onClick = { /* TODO: navigate to all subscription page */ }
+                            )
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
 
@@ -241,9 +259,11 @@ private fun HomeContent(
                         },
                         { it.createdAt }
                     )
-                )
+                ).take(5)
 
-                items(sortedSubscriptions) { subscription ->
+                itemsIndexed(
+                    sortedSubscriptions,
+                    key = { _, sub -> sub.id }) { index, subscription ->
                     SubscriptionCard(
                         subscription = subscription,
                         onDelete = { sub ->
@@ -266,6 +286,9 @@ private fun HomeContent(
                             onEditSubscription(subscription.id)
                         }
                     )
+                    if (index < sortedSubscriptions.lastIndex) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
             }
         }

@@ -3,18 +3,19 @@ package com.zerodev.subscriptionmanager.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,24 +26,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.zerodev.subscriptionmanager.R
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
-import com.zerodev.subscriptionmanager.core.utils.formatDate
 import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
+import com.zerodev.subscriptionmanager.ui.theme.CardBackground
+import com.zerodev.subscriptionmanager.ui.theme.Primary
+import com.zerodev.subscriptionmanager.ui.theme.TextPrimary
+import com.zerodev.subscriptionmanager.ui.theme.TextSecondary
 import me.saket.swipe.SwipeAction
 import me.saket.swipe.SwipeableActionsBox
-import java.util.Locale
+import kotlin.math.absoluteValue
 
 @Composable
 fun SubscriptionCard(
@@ -51,7 +56,7 @@ fun SubscriptionCard(
     onClick: () -> Unit
 ) {
     val context = LocalContext.current
-    val currency = remember { CurrencyFormatter.getSelectedCurrency(context) }
+    val currency = remember(subscription) { CurrencyFormatter.getSelectedCurrency(context) }
 
     val deleteSubscription = SwipeAction(
         icon = { Icon(Icons.Default.Delete, contentDescription = "Delete") },
@@ -59,6 +64,7 @@ fun SubscriptionCard(
         isUndo = true,
         onSwipe = { onDelete(subscription) },
     )
+
     SwipeableActionsBox(
         endActions = listOf(deleteSubscription),
         swipeThreshold = 100.dp,
@@ -70,144 +76,157 @@ fun SubscriptionCard(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onClick() },
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        .clickable(enabled = subscription.isActive()) { onClick() },
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = when (subscription.status) {
-                            SubscriptionStatus.ACTIVE -> MaterialTheme.colorScheme.surface
-                            SubscriptionStatus.CANCELLED -> MaterialTheme.colorScheme.error.copy(
-                                alpha = 0.2f
-                            )
-
-                            SubscriptionStatus.EXPIRED -> MaterialTheme.colorScheme.outline.copy(
-                                alpha = 0.3f
-                            )
-                        }
+                        containerColor = CardBackground
                     ),
                     border = BorderStroke(
                         width = 1.dp,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f)
+                        color = if (subscription.isActive()) Primary.copy(alpha = 0.2f) else Color.Gray.copy(alpha = 0.1f)
                     ),
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
+                    val contentAlpha = if (subscription.isActive()) 1f else 0.5f
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .alpha(contentAlpha),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
+                        val isBrandLogoAvailable = remember(subscription.name) {
+                            getSubscriptionIcon(subscription.name) != R.drawable.subtrack
+                        }
+
+                        if (isBrandLogoAvailable) {
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .background(
+                                        color = Color(0xFF1E1E1E),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    modifier = Modifier
-                                        .width(40.dp)
-                                        .height(40.dp)
-                                        .padding(4.dp),
                                     painter = painterResource(getSubscriptionIcon(subscription.name)),
-                                    contentDescription = "Subscription Icon",
-                                    tint = Color.Unspecified
+                                    contentDescription = "Subscription Logo",
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(36.dp)
                                 )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text(
-                                        text = subscription.name,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    when (subscription.status) {
-                                        SubscriptionStatus.ACTIVE -> {
-                                            subscription.getRemainingDays()?.let { days ->
-                                                Text(
-                                                    text = buildAnnotatedString {
-                                                        append("Due in ")
-                                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                                            append("$days")
-                                                        }
-                                                        append(" days")
-                                                    },
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                            }
-                                        }
-
-                                        SubscriptionStatus.CANCELLED -> {
-                                            subscription.cancelledAt?.let {
-                                                Text(
-                                                    text = "Cancelled at ${formatDate(it)}",
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                            }
-                                        }
-
-                                        SubscriptionStatus.EXPIRED -> {}
-                                    }
-                                }
                             }
-
-                            Column {
-                                val billingCycle = when (subscription.billingCycle) {
-                                    BillingCycle.MONTHLY -> "Month"
-                                    BillingCycle.WEEKLY -> "Week"
-                                    BillingCycle.YEARLY -> "Year"
-                                    BillingCycle.CUSTOM -> "${subscription.customCycleDays ?: 0} Days"
-                                }
+                        } else {
+                            val colors = listOf(
+                                Color(0xFFE50914), // Red
+                                Color(0xFF1DB954), // Green
+                                Color(0xFF1F85DE), // Blue
+                                Color(0xFFFF9900), // Orange
+                                Color(0xFF7C3AED), // Violet
+                                Color(0xFFEC4899), // Pink
+                                Color(0xFF00DF89), // Mint
+                                Color(0xFFF59E0B)  // Yellow/Amber
+                            )
+                            val randomColor = remember(subscription.name) {
+                                val index = (subscription.name.hashCode().absoluteValue) % colors.size
+                                colors[index]
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .background(
+                                        color = randomColor,
+                                        shape = RoundedCornerShape(12.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                val firstLetter = subscription.name.firstOrNull()?.uppercase() ?: "S"
                                 Text(
-                                    text = CurrencyFormatter.format(subscription.price, currency),
-                                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                    text = firstLetter,
+                                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
                                 )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(text = "/$billingCycle")
                             }
                         }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Text(
+                            text = subscription.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column(
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text(
+                                text = CurrencyFormatter.format(subscription.price, currency),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary,
+                                textDecoration = if (subscription.isActive()) TextDecoration.None else TextDecoration.LineThrough
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            if (subscription.isActive()) {
+                                val billingCycleText = when (subscription.billingCycle) {
+                                    BillingCycle.MONTHLY -> "MONTHLY"
+                                    BillingCycle.WEEKLY -> "WEEKLY"
+                                    BillingCycle.YEARLY -> "YEARLY"
+                                    BillingCycle.CUSTOM -> "${subscription.customCycleDays ?: 0} DAYS"
+                                }
+                                Text(
+                                    text = billingCycleText,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            } else {
+                                val (badgeBgColor, badgeTextColor, badgeText) = when (subscription.status) {
+                                    SubscriptionStatus.CANCELLED -> Triple(
+                                        Color(0xFFFF3B30).copy(alpha = 0.15f),
+                                        Color(0xFFFF453A),
+                                        "CANCELLED"
+                                    )
+                                    SubscriptionStatus.EXPIRED -> Triple(
+                                        Color.Gray.copy(alpha = 0.15f),
+                                        Color.LightGray,
+                                        "EXPIRED"
+                                    )
+                                    else -> Triple(Color.Transparent, Color.Transparent, "")
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(badgeBgColor)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = badgeText,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                        color = badgeTextColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Details",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
-                StatusBadge(
-                    status = subscription.status,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .absoluteOffset(y = -(10.dp))
-                )
             }
         }
     )
-}
-
-@Composable
-private fun StatusBadge(status: SubscriptionStatus, modifier: Modifier = Modifier) {
-    val (backgroundColor, textColor, text) = when (status) {
-        SubscriptionStatus.ACTIVE -> Triple(
-            MaterialTheme.colorScheme.primary,
-            MaterialTheme.colorScheme.onPrimary,
-            "Active"
-        )
-
-        SubscriptionStatus.CANCELLED -> Triple(
-            MaterialTheme.colorScheme.error,
-            MaterialTheme.colorScheme.onError,
-            "Cancelled"
-        )
-
-        SubscriptionStatus.EXPIRED -> Triple(
-            MaterialTheme.colorScheme.outline,
-            MaterialTheme.colorScheme.onSurface,
-            "Expired"
-        )
-    }
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(backgroundColor)
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = textColor,
-            fontWeight = FontWeight.Medium
-        )
-    }
 }
