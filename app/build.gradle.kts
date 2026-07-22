@@ -76,6 +76,8 @@ dependencies {
 
     implementation(libs.swipe)
 
+    implementation(libs.vico.compose)
+
     implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.androidx.core.ktx)
