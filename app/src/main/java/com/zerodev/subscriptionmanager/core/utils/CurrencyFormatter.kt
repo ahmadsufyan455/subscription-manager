@@ -60,4 +60,59 @@ object CurrencyFormatter {
             }
         }
     }
+    fun formatInput(input: String, currency: Currency): String {
+        val symbols = java.text.DecimalFormatSymbols.getInstance(currency.locale)
+        val groupingSeparator = symbols.groupingSeparator
+        val decimalSeparator = symbols.decimalSeparator
+
+        // Remove all grouping separators from the input string
+        val cleanGrouping = input.replace(groupingSeparator.toString(), "")
+
+        // Normalize the decimal separator to dot (.) for parsing
+        val normalized = cleanGrouping.replace(decimalSeparator.toString(), ".")
+
+        val cleanInput = normalized.filter { it.isDigit() || it == '.' }
+        if (cleanInput.isEmpty()) return ""
+
+        val firstDotIndex = cleanInput.indexOf('.')
+        val intPart: String
+        val decPart: String?
+
+        if (firstDotIndex != -1) {
+            intPart = cleanInput.substring(0, firstDotIndex).filter { it.isDigit() }
+            decPart = cleanInput.substring(firstDotIndex + 1).filter { it.isDigit() }
+        } else {
+            intPart = cleanInput.filter { it.isDigit() }
+            decPart = null
+        }
+
+        if (intPart.isEmpty()) {
+            return if (decPart != null && currency != Currency.IDR) "0.$decPart" else ""
+        }
+
+        val parsedInt = intPart.toLongOrNull() ?: return ""
+        val numberFormat = NumberFormat.getNumberInstance(currency.locale)
+        val formattedInt = numberFormat.format(parsedInt)
+
+        return if (decPart != null && currency != Currency.IDR) {
+            val limitedDec = if (decPart.length > 2) decPart.substring(0, 2) else decPart
+            "$formattedInt$decimalSeparator$limitedDec"
+        } else {
+            formattedInt
+        }
+    }
+
+    fun parse(formatted: String, currency: Currency): Double {
+        if (currency == Currency.IDR) {
+            val digits = formatted.filter { it.isDigit() }
+            return digits.toDoubleOrNull() ?: 0.0
+        }
+        val symbols = java.text.DecimalFormatSymbols.getInstance(currency.locale)
+        val decimalSeparator = symbols.decimalSeparator
+        val groupingSeparator = symbols.groupingSeparator
+        var clean = formatted.replace(groupingSeparator.toString(), "")
+        clean = clean.replace(decimalSeparator.toString(), ".")
+        clean = clean.filter { it.isDigit() || it == '.' }
+        return clean.toDoubleOrNull() ?: 0.0
+    }
 }

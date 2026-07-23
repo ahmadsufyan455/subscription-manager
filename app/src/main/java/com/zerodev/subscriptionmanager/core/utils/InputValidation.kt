@@ -3,6 +3,7 @@ package com.zerodev.subscriptionmanager.core.utils
 fun validateFormInput(
     name: String,
     price: String,
+    currency: Currency,
     setNameError: (String?) -> Unit,
     setPriceError: (String?) -> Unit
 ): Boolean {
@@ -36,24 +37,21 @@ fun validateFormInput(
         }
 
         else -> {
-            try {
-                val priceValue = price.toDouble()
-                when {
-                    priceValue <= 0 -> {
-                        setPriceError("Price must be greater than 0")
-                        isValid = false
-                    }
-
-                    priceValue > 10000 -> {
-                        setPriceError("Price must be less than $10,000")
-                        isValid = false
-                    }
-
-                    else -> setPriceError(null)
+            val parsedPrice = CurrencyFormatter.parse(price, currency)
+            val priceInUsd = CurrencyFormatter.convertToUsd(parsedPrice, currency)
+            when {
+                parsedPrice <= 0 -> {
+                    setPriceError("Price must be greater than 0")
+                    isValid = false
                 }
-            } catch (_: NumberFormatException) {
-                setPriceError("Please enter a valid price")
-                isValid = false
+
+                priceInUsd > 10000 -> {
+                    val limitFormatted = CurrencyFormatter.format(10000.0, currency)
+                    setPriceError("Price must be less than $limitFormatted")
+                    isValid = false
+                }
+
+                else -> setPriceError(null)
             }
         }
     }
