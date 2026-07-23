@@ -120,6 +120,22 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
     }
 
+    // SAF launcher — opens the system file picker so the user picks a JSON to import
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.importSubscriptions(uri) { count ->
+                Toast.makeText(
+                    context,
+                    if (count >= 0) "$count subscriptions imported successfully"
+                    else "Import failed. Make sure the file is a valid export.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -250,6 +266,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         tint = TextSecondary,
                         modifier = Modifier.size(20.dp)
                     )
+                },
+                onClick = {
+                    importLauncher.launch(arrayOf("application/json"))
                 }
             )
 

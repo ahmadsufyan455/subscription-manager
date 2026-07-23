@@ -11,6 +11,7 @@ interface SubscriptionRepository {
     suspend fun insertSubscription(subscription: Subscription)
     suspend fun updateSubscription(subscription: Subscription)
     suspend fun deleteSubscription(subscription: Subscription)
+    suspend fun replaceAllSubscriptions(subscriptions: List<Subscription>)
 }
 
 class SubscriptionRepositoryImpl(private val subscriptionDao: SubscriptionDao) :
@@ -37,5 +38,10 @@ class SubscriptionRepositoryImpl(private val subscriptionDao: SubscriptionDao) :
 
     override suspend fun deleteSubscription(subscription: Subscription) {
         subscriptionDao.deleteSubscription(subscription)
+    }
+
+    override suspend fun replaceAllSubscriptions(subscriptions: List<Subscription>) {
+        subscriptionDao.deleteAll()
+        subscriptionDao.insertAll(subscriptions)
     }
 }

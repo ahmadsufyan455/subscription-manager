@@ -3,6 +3,7 @@ package com.zerodev.subscriptionmanager.data.local.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
@@ -30,4 +31,10 @@ interface SubscriptionDao {
 
     @Query("SELECT * FROM subscriptions WHERE status = 'ACTIVE'")
     suspend fun getActiveSubscriptions(): List<Subscription>
+
+    @Query("DELETE FROM subscriptions")
+    suspend fun deleteAll()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(subscriptions: List<Subscription>)
 }

@@ -8,6 +8,7 @@ import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
 import com.zerodev.subscriptionmanager.core.helper.ExportHelper
+import com.zerodev.subscriptionmanager.core.helper.ImportHelper
 import com.zerodev.subscriptionmanager.core.helper.NotificationTracker
 import com.zerodev.subscriptionmanager.core.helper.RenewalHelper
 import kotlinx.coroutines.Dispatchers
@@ -142,6 +143,28 @@ class HomeViewModel(
             val subscriptions = repository.getAllSubscriptionsSnapshot()
             val success = ExportHelper.exportToJson(application, uri, subscriptions)
             launch(Dispatchers.Main) { onResult(success) }
+        }
+    }
+
+    /**
+     * Reads a JSON file at [uri], replaces all subscriptions in Room with
+     * the imported ones, and calls [onResult] on the main thread with the
+     * number of imported records, or -1 on failure.
+     */
+    fun importSubscriptions(uri: Uri, onResult: (count: Int) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val subscriptions = ImportHelper.readFromJson(application, uri)
+            if (subscriptions == null) {
+                launch(Dispatchers.Main) { onResult(-1) }
+                return@launch
+            }
+            try {
+                repository.replaceAllSubscriptions(subscriptions)
+                launch(Dispatchers.Main) { onResult(subscriptions.size) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                launch(Dispatchers.Main) { onResult(-1) }
+            }
         }
     }
 }
