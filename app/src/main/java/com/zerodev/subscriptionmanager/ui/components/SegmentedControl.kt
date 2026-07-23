@@ -28,7 +28,7 @@ fun SegmentedControl(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(com.zerodev.subscriptionmanager.ui.theme.DarkBackground, RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(14.dp))
             .padding(4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -39,7 +39,7 @@ fun SegmentedControl(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(if (isSelected) com.zerodev.subscriptionmanager.ui.theme.CardBackground else Color.Transparent)
+                    .background(if (isSelected) Color.White.copy(alpha = 0.12f) else Color.Transparent)
                     .clickable { onItemSelect(item) }
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center

@@ -76,7 +76,7 @@ fun DetailSubscriptionContent(
                     .size(80.dp)
                     .clip(RoundedCornerShape(24.dp))
                     .background(
-                        if (brandIcon != R.drawable.subtrack) Color(0xFF1E1E1E)
+                        if (brandIcon != R.drawable.subtrack) Color.White.copy(alpha = 0.05f)
                         else {
                             val colors = listOf(
                                 Color(0xFFE50914), // Red
@@ -126,10 +126,10 @@ fun DetailSubscriptionContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(com.zerodev.subscriptionmanager.ui.theme.CardBackground)
+                .background(Color.White.copy(alpha = 0.05f))
                 .border(
                     width = 1.dp,
-                    color = com.zerodev.subscriptionmanager.ui.theme.Divider.copy(alpha = 0.5f),
+                    color = Color.White.copy(alpha = 0.08f),
                     shape = RoundedCornerShape(20.dp)
                 )
                 .padding(16.dp)
@@ -208,7 +208,7 @@ fun DetailSubscriptionContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .background(com.zerodev.subscriptionmanager.ui.theme.Divider.copy(alpha = 0.5f))
+                        .background(Color.White.copy(alpha = 0.08f))
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 

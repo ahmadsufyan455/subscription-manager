@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -68,19 +69,6 @@ fun MainScreen(
         }
     }
 
-    // Show the modal sheet only when needed
-    if (showAddSubscriptionSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showAddSubscriptionSheet = false },
-            sheetState = bottomSheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) {
-            AddSubscriptionBottomSheet(
-                onDismiss = { showAddSubscriptionSheet = false },
-            )
-        }
-    }
-
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
@@ -93,38 +81,59 @@ fun MainScreen(
             }
         }
     ) { contentPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = BottomNavItem.Home.route,
-            modifier = Modifier
-                .hazeSource(state = hazeState)
-        ) {
-            composable(BottomNavItem.Home.route) {
-                HomeScreen(
-                    contentPadding = contentPadding,
-                    onSeeAllClick = {
-                        navController.navigate("all_subscriptions")
-                    },
-                    onNotificationClick = {
-                        navController.navigate("notifications")
-                    }
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            NavHost(
+                navController = navController,
+                startDestination = BottomNavItem.Home.route,
+                modifier = Modifier.hazeSource(state = hazeState)
+            ) {
+                composable(BottomNavItem.Home.route) {
+                    HomeScreen(
+                        contentPadding = contentPadding,
+                        onSeeAllClick = {
+                            navController.navigate("all_subscriptions")
+                        },
+                        onNotificationClick = {
+                            navController.navigate("notifications")
+                        }
+                    )
+                }
+
+                composable("all_subscriptions") {
+                    SubscriptionScreen(
+                        contentPadding = contentPadding,
+                        onBack = { navController.navigateUp() }
+                    )
+                }
+
+                composable("notifications") {
+                    NotificationScreen(
+                        onBack = { navController.navigateUp() }
+                    )
+                }
+
+                composable(BottomNavItem.Settings.route) {
+                    SettingsScreen()
+                }
             }
-            composable(BottomNavItem.Settings.route) { SettingsScreen() }
-            composable("all_subscriptions") {
-                SubscriptionScreen(
-                    contentPadding = contentPadding,
-                    onBack = {
-                        navController.popBackStack()
-                    }
+
+            if (showAddSubscriptionSheet) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .hazeEffect(hazeState, style = HazeMaterials.ultraThin())
                 )
-            }
-            composable("notifications") {
-                NotificationScreen(
-                    onBack = {
-                        navController.popBackStack()
-                    }
-                )
+                ModalBottomSheet(
+                    onDismissRequest = { showAddSubscriptionSheet = false },
+                    sheetState = bottomSheetState,
+                    containerColor = com.zerodev.subscriptionmanager.ui.theme.BottomSheetBackground,
+                    scrimColor = androidx.compose.ui.graphics.Color.Transparent,
+                    dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle(color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f)) }
+                ) {
+                    AddSubscriptionBottomSheet(
+                        onDismiss = { showAddSubscriptionSheet = false },
+                    )
+                }
             }
         }
     }

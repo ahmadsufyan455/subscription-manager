@@ -631,11 +631,11 @@ private fun BillingCycleSection(
                         ),
                         isError = customDaysError != null,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                            unfocusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                            focusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
-                            unfocusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
-                            errorContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
+                            focusedContainerColor = Color.White.copy(alpha = 0.07f),
+                            unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
+                            focusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Primary.copy(alpha = 0.6f),
+                            unfocusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else Color.White.copy(alpha = 0.08f),
+                            errorContainerColor = Color.White.copy(alpha = 0.05f),
                             errorBorderColor = MaterialTheme.colorScheme.error
                         ),
                         modifier = Modifier.width(80.dp)
@@ -646,7 +646,12 @@ private fun BillingCycleSection(
                             .weight(1f)
                             .height(56.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(com.zerodev.subscriptionmanager.ui.theme.DarkBackground)
+                            .background(Color.White.copy(alpha = 0.05f))
+                            .border(
+                                width = 1.dp,
+                                color = Color.White.copy(alpha = 0.08f),
+                                shape = RoundedCornerShape(16.dp)
+                            )
                             .clickable { /* no-op container matches spec mockup layout */ }
                             .padding(horizontal = 16.dp),
                         contentAlignment = Alignment.CenterStart

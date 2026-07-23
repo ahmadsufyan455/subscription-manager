@@ -55,10 +55,16 @@ import com.zerodev.subscriptionmanager.ui.components.SpendingChart
 import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
 import com.zerodev.subscriptionmanager.ui.components.UpcomingCard
 import com.zerodev.subscriptionmanager.ui.theme.DarkBackground
+import androidx.compose.ui.graphics.Color
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
@@ -77,77 +83,86 @@ fun HomeScreen(
         skipPartiallyExpanded = true
     )
 
-    if (showAddSubscriptionSheet) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showAddSubscriptionSheet = false
-                editSubscriptionId = null
-            },
-            sheetState = bottomSheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) {
-            AddSubscriptionBottomSheet(
-                onDismiss = {
-                    scope.launch {
-                        bottomSheetState.hide()
-                    }.invokeOnCompletion {
-                        if (!bottomSheetState.isVisible) {
-                            showAddSubscriptionSheet = false
-                            editSubscriptionId = null
-                        }
+    val hazeState = rememberHazeState()
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                TopAppBar(
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = DarkBackground
+                    ),
+                    title = {
+                        AppHeaderTitle()
+                    },
+                    navigationIcon = {
+                        AppHeaderNavIcon()
+                    },
+                    actions = {
+                        AppHeaderActions(
+                            onClick = onNotificationClick,
+                            hasUnreadNotifications = uiState.hasUnreadNotifications
+                        )
                     }
-                },
-                isEditMode = editSubscriptionId != null,
-                subscriptionId = editSubscriptionId,
-            )
-        }
-    }
-
-    // Handle error messages
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let { error ->
-            snackbarHostState.showSnackbar(error)
-            viewModel.clearError()
-        }
-    }
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DarkBackground
-                ),
-                title = {
-                    AppHeaderTitle()
-                },
-                navigationIcon = {
-                    AppHeaderNavIcon()
-                },
-                actions = {
-                    AppHeaderActions(
-                        onClick = onNotificationClick,
-                        hasUnreadNotifications = uiState.hasUnreadNotifications
+                )
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .hazeSource(state = hazeState)
+            ) {
+                if (uiState.isLoading) {
+                    LoadingContent(paddingValues)
+                } else {
+                    HomeContent(
+                        uiState = uiState,
+                        onDeleted = viewModel::deleteSubscription,
+                        onUndoDelete = viewModel::addSubscription,
+                        paddingValues = paddingValues,
+                        contentPadding = contentPadding,
+                        onSeeAllClick = onSeeAllClick,
+                        onEditSubscription = { subscriptionId ->
+                            editSubscriptionId = subscriptionId
+                            showAddSubscriptionSheet = true
+                        }
                     )
                 }
-            )
+            }
         }
-    ) { paddingValues ->
-        if (uiState.isLoading) {
-            LoadingContent(paddingValues)
-        } else {
-            HomeContent(
-                uiState = uiState,
-                onDeleted = viewModel::deleteSubscription,
-                onUndoDelete = viewModel::addSubscription,
-                paddingValues = paddingValues,
-                contentPadding = contentPadding,
-                onSeeAllClick = onSeeAllClick,
-                onEditSubscription = { subscriptionId ->
-                    editSubscriptionId = subscriptionId
-                    showAddSubscriptionSheet = true
-                }
+
+        if (showAddSubscriptionSheet) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .hazeEffect(hazeState, style = HazeMaterials.ultraThin())
             )
+            ModalBottomSheet(
+                onDismissRequest = {
+                    showAddSubscriptionSheet = false
+                    editSubscriptionId = null
+                },
+                sheetState = bottomSheetState,
+                containerColor = com.zerodev.subscriptionmanager.ui.theme.BottomSheetBackground,
+                scrimColor = Color.Transparent,
+                dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.25f)) }
+            ) {
+                AddSubscriptionBottomSheet(
+                    onDismiss = {
+                        scope.launch {
+                            bottomSheetState.hide()
+                        }.invokeOnCompletion {
+                            if (!bottomSheetState.isVisible) {
+                                showAddSubscriptionSheet = false
+                                editSubscriptionId = null
+                            }
+                        }
+                    },
+                    isEditMode = editSubscriptionId != null,
+                    subscriptionId = editSubscriptionId,
+                )
+            }
         }
     }
 }

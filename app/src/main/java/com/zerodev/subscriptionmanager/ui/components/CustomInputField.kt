@@ -51,14 +51,14 @@ fun CustomInputField(
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                unfocusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
-                unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
+                focusedContainerColor = Color.White.copy(alpha = 0.07f),
+                unfocusedContainerColor = Color.White.copy(alpha = 0.05f),
+                focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Primary.copy(alpha = 0.6f),
+                unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else Color.White.copy(alpha = 0.08f),
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
                 cursorColor = com.zerodev.subscriptionmanager.ui.theme.Primary,
-                errorContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
+                errorContainerColor = Color.White.copy(alpha = 0.05f),
                 errorBorderColor = MaterialTheme.colorScheme.error
             ),
             modifier = Modifier.fillMaxWidth()

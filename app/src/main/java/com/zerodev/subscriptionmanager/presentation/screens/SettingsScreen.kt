@@ -63,6 +63,11 @@ import com.zerodev.subscriptionmanager.ui.theme.Divider
 import com.zerodev.subscriptionmanager.ui.theme.Primary
 import com.zerodev.subscriptionmanager.ui.theme.TextPrimary
 import com.zerodev.subscriptionmanager.ui.theme.TextSecondary
+import dev.chrisbanes.haze.hazeEffect
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
+import dev.chrisbanes.haze.rememberHazeState
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -78,7 +83,7 @@ private val ImportIconTint   = Color(0xFF9B6DFF)   // purple
 private val DeleteIconBg     = Color(0xFF3A1A1A)   // dark red
 private val DeleteIconTint   = Color(0xFFFF3B30)   // red
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -86,6 +91,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val sharedPrefs = remember {
         context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
     }
+
+    val hazeState = rememberHazeState()
 
     var notificationsEnabled by remember {
         mutableStateOf(sharedPrefs.getBoolean("notifications_enabled", false))
@@ -138,13 +145,15 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(DarkBackground)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp)
-    ) {
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeSource(state = hazeState)
+                .background(DarkBackground)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+        ) {
         Spacer(Modifier.height(56.dp))
 
         // ── Page Title ──────────────────────────────────────────────────────
@@ -317,13 +326,23 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(32.dp))
     }
 
+    // ── Haze Blur Overlay when Bottom Sheet is active ───────────────────────
+    if (showCurrencySheet || showClearSheet) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .hazeEffect(hazeState, style = HazeMaterials.ultraThin())
+        )
+    }
+
     // ── Clear All Data Confirmation Sheet ──────────────────────────────────
     if (showClearSheet) {
         ModalBottomSheet(
             onDismissRequest = { showClearSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-            containerColor = Color(0xFF1A1A1A),
-            dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF4A4A4A)) }
+            containerColor = com.zerodev.subscriptionmanager.ui.theme.BottomSheetBackground,
+            scrimColor = Color.Transparent,
+            dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.25f)) }
         ) {
             ClearDataConfirmationSheet(
                 onConfirm = {
@@ -346,8 +365,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         ModalBottomSheet(
             onDismissRequest = { showCurrencySheet = false },
             sheetState = sheetState,
-            containerColor = CardBackground,
-            dragHandle = { BottomSheetDefaults.DragHandle(color = TextSecondary) }
+            containerColor = com.zerodev.subscriptionmanager.ui.theme.BottomSheetBackground,
+            scrimColor = Color.Transparent,
+            dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.25f)) }
         ) {
             CurrencyBottomSheetContent(
                 selectedCurrency = selectedCurrency,
@@ -362,6 +382,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
         }
     }
+}
 }
 
 // ─── Section Header ───────────────────────────────────────────────────────────
