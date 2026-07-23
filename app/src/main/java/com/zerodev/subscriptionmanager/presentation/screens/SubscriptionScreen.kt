@@ -62,16 +62,13 @@ fun SubscriptionScreen(
 
     val filteredSubscriptions = remember(uiState.subscriptions, searchQuery) {
         val sorted = uiState.subscriptions.sortedWith(
-            compareBy(
-                { subscription ->
-                    when (subscription.status) {
-                        SubscriptionStatus.ACTIVE -> 0
-                        SubscriptionStatus.CANCELLED -> 1
-                        SubscriptionStatus.EXPIRED -> 2
-                    }
-                },
-                { it.createdAt }
-            )
+            compareBy<Subscription> { subscription ->
+                when (subscription.status) {
+                    SubscriptionStatus.ACTIVE -> 0
+                    SubscriptionStatus.CANCELLED -> 1
+                    SubscriptionStatus.EXPIRED -> 2
+                }
+            }.thenByDescending { it.createdAt }
         )
         if (searchQuery.isBlank()) {
             sorted

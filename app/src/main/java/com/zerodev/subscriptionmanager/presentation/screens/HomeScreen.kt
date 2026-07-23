@@ -139,6 +139,7 @@ fun HomeScreen(
             HomeContent(
                 uiState = uiState,
                 onDeleted = viewModel::deleteSubscription,
+                onUndoDelete = viewModel::addSubscription,
                 paddingValues = paddingValues,
                 contentPadding = contentPadding,
                 onSeeAllClick = onSeeAllClick,
@@ -174,10 +175,10 @@ private fun LoadingContent(paddingValues: PaddingValues) {
 private fun HomeContent(
     uiState: HomeUiState,
     onDeleted: (Subscription) -> Unit,
+    onUndoDelete: (Subscription) -> Unit,
     paddingValues: PaddingValues,
     contentPadding: PaddingValues,
     onSeeAllClick: () -> Unit,
-    viewModel: HomeViewModel = koinViewModel(),
     onEditSubscription: (Int) -> Unit
 ) {
     val scope = rememberCoroutineScope()
@@ -252,16 +253,13 @@ private fun HomeContent(
                 }
             } else {
                 val sortedSubscriptions = uiState.subscriptions.sortedWith(
-                    compareBy(
-                        { subscription ->
-                            when (subscription.status) {
-                                SubscriptionStatus.ACTIVE -> 0
-                                SubscriptionStatus.CANCELLED -> 1
-                                SubscriptionStatus.EXPIRED -> 2
-                            }
-                        },
-                        { it.createdAt }
-                    )
+                    compareBy<Subscription> { subscription ->
+                        when (subscription.status) {
+                            SubscriptionStatus.ACTIVE -> 0
+                            SubscriptionStatus.CANCELLED -> 1
+                            SubscriptionStatus.EXPIRED -> 2
+                        }
+                    }.thenByDescending { it.createdAt }
                 ).take(5)
 
                 itemsIndexed(
@@ -280,7 +278,7 @@ private fun HomeContent(
                                 )
                                 if (result == SnackbarResult.ActionPerformed) {
                                     deletedSubscription?.let { deleted ->
-                                        viewModel.addSubscription(deleted)
+                                        onUndoDelete(deleted)
                                     }
                                 }
                             }

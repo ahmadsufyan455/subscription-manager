@@ -1,6 +1,5 @@
 package com.zerodev.subscriptionmanager
 
-
 import android.app.Application
 import com.zerodev.subscriptionmanager.core.di.databaseModule
 import com.zerodev.subscriptionmanager.core.di.repositoryModule

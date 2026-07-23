@@ -93,6 +93,6 @@ fun SubscriptionManager() {
 @Composable
 fun SubscriptionManagerAppPreview() {
     SubscriptionManagerTheme {
-        SubscriptionManagerApp()
+        SubscriptionManager()
     }
 }
