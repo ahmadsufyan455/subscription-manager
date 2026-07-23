@@ -62,6 +62,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
+    onSeeAllClick: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -140,6 +141,7 @@ fun HomeScreen(
                 onDeleted = viewModel::deleteSubscription,
                 paddingValues = paddingValues,
                 contentPadding = contentPadding,
+                onSeeAllClick = onSeeAllClick,
                 onEditSubscription = { subscriptionId ->
                     editSubscriptionId = subscriptionId
                     showAddSubscriptionSheet = true
@@ -174,6 +176,7 @@ private fun HomeContent(
     onDeleted: (Subscription) -> Unit,
     paddingValues: PaddingValues,
     contentPadding: PaddingValues,
+    onSeeAllClick: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
     onEditSubscription: (Int) -> Unit
 ) {
@@ -234,7 +237,7 @@ private fun HomeContent(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.clickable(
-                                onClick = { /* TODO: navigate to all subscription page */ }
+                                onClick = onSeeAllClick
                             )
                         )
                     }

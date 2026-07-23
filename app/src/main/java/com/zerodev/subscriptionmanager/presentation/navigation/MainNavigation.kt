@@ -36,6 +36,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.zerodev.subscriptionmanager.presentation.screens.AddSubscriptionBottomSheet
 import com.zerodev.subscriptionmanager.presentation.screens.HomeScreen
+import com.zerodev.subscriptionmanager.presentation.screens.SubscriptionScreen
 import com.zerodev.subscriptionmanager.presentation.screens.SettingsScreen
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
@@ -84,8 +85,23 @@ fun MainScreen(
             modifier = Modifier
                 .hazeSource(state = hazeState)
         ) {
-            composable(BottomNavItem.Home.route) { HomeScreen(contentPadding = contentPadding) }
+            composable(BottomNavItem.Home.route) {
+                HomeScreen(
+                    contentPadding = contentPadding,
+                    onSeeAllClick = {
+                        navController.navigate("all_subscriptions")
+                    }
+                )
+            }
             composable(BottomNavItem.Settings.route) { SettingsScreen() }
+            composable("all_subscriptions") {
+                SubscriptionScreen(
+                    contentPadding = contentPadding,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }
