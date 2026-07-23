@@ -3,7 +3,10 @@ package com.zerodev.subscriptionmanager.core.workers
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.zerodev.subscriptionmanager.data.local.entities.NotificationEntity
+import com.zerodev.subscriptionmanager.data.local.entities.NotificationType
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
+import com.zerodev.subscriptionmanager.data.repository.NotificationRepository
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
 import com.zerodev.subscriptionmanager.core.helper.NotificationHelper
 import com.zerodev.subscriptionmanager.core.helper.NotificationTracker
@@ -20,6 +23,7 @@ class NotificationWorker(
 ) : CoroutineWorker(context, params), KoinComponent {
 
     private val repository: SubscriptionRepository by inject()
+    private val notificationRepository: NotificationRepository by inject()
 
     override suspend fun doWork(): Result {
         return try {
@@ -53,6 +57,18 @@ class NotificationWorker(
                                 context,
                                 subscription,
                                 remainingDays
+                            )
+
+                            // Save notification to database
+                            val formattedPrice = String.format("%.2f", subscription.price)
+                            val message = "${subscription.name} (\$$formattedPrice) will renew in $remainingDays day${if (remainingDays > 1) "s" else ""}. Make sure you have sufficient funds."
+                            notificationRepository.insertNotification(
+                                NotificationEntity(
+                                    title = "Upcoming Bill",
+                                    message = message,
+                                    type = NotificationType.UPCOMING_BILL,
+                                    subscriptionId = subscription.id
+                                )
                             )
 
                             // Mark as sent

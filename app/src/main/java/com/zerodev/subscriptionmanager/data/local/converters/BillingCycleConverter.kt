@@ -24,4 +24,14 @@ class Converters {
     fun toSubscriptionStatus(status: String): SubscriptionStatus {
         return SubscriptionStatus.valueOf(status)
     }
+
+    @TypeConverter
+    fun fromNotificationType(type: com.zerodev.subscriptionmanager.data.local.entities.NotificationType): String {
+        return type.name
+    }
+
+    @TypeConverter
+    fun toNotificationType(type: String): com.zerodev.subscriptionmanager.data.local.entities.NotificationType {
+        return com.zerodev.subscriptionmanager.data.local.entities.NotificationType.valueOf(type)
+    }
 }
