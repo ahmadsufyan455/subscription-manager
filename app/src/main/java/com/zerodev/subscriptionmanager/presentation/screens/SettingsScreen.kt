@@ -93,6 +93,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         mutableStateOf(CurrencyFormatter.getSelectedCurrency(context))
     }
     var showCurrencySheet by remember { mutableStateOf(false) }
+    var showClearSheet by remember { mutableStateOf(false) }
 
     val versionName = remember {
         try {
@@ -280,7 +281,8 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 iconVector = Icons.Default.Delete,
                 label = "Clear All Data",
                 labelColor = DeleteIconTint,
-                trailingContent = {}
+                trailingContent = {},
+                onClick = { showClearSheet = true }
             )
         }
 
@@ -312,6 +314,30 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         }
 
         Spacer(Modifier.height(32.dp))
+    }
+
+    // ── Clear All Data Confirmation Sheet ──────────────────────────────────
+    if (showClearSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showClearSheet = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+            containerColor = Color(0xFF1A1A1A),
+            dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF4A4A4A)) }
+        ) {
+            ClearDataConfirmationSheet(
+                onConfirm = {
+                    showClearSheet = false
+                    viewModel.clearAllData { success ->
+                        Toast.makeText(
+                            context,
+                            if (success) "All data cleared" else "Failed to clear data.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                },
+                onDismiss = { showClearSheet = false }
+            )
+        }
     }
 
     // ── Currency Bottom Sheet ────────────────────────────────────────────────
@@ -498,6 +524,110 @@ private fun CurrencyBottomSheetContent(
                     modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp)
                 )
             }
+        }
+    }
+}
+
+// ─── Clear All Data Confirmation Sheet ────────────────────────────────────────
+@Composable
+private fun ClearDataConfirmationSheet(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.height(8.dp))
+
+        // ── Warning icon: two concentric circles ─────────────────────────────
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF3A1010)),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF5A1A1A)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = DeleteIconTint,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        // ── Title ─────────────────────────────────────────────────────────────
+        Text(
+            text = "Clear All Data?",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        // ── Description ───────────────────────────────────────────────────────
+        Text(
+            text = "This action cannot be undone. All your subscriptions, history, and settings will be permanently deleted from this device.",
+            fontSize = 14.sp,
+            color = TextSecondary,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            lineHeight = 20.sp,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        Spacer(Modifier.height(32.dp))
+
+        // ── Yes, Delete Everything button ─────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(DeleteIconTint)
+                .clickable { onConfirm() }
+                .padding(vertical = 18.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Yes, Delete Everything",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        // ── Cancel button ─────────────────────────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(Color.Transparent)
+                .clickable { onDismiss() }
+                .padding(vertical = 18.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Cancel",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary
+            )
         }
     }
 }

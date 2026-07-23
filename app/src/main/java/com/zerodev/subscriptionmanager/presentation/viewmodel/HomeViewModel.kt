@@ -167,4 +167,20 @@ class HomeViewModel(
             }
         }
     }
+
+    /**
+     * Permanently deletes all subscriptions from the local database.
+     * [onResult] is called on the main thread with `true` on success.
+     */
+    fun clearAllData(onResult: (success: Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                repository.replaceAllSubscriptions(emptyList())
+                launch(Dispatchers.Main) { onResult(true) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                launch(Dispatchers.Main) { onResult(false) }
+            }
+        }
+    }
 }
