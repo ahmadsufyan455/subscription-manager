@@ -24,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.automirrored.outlined.Label
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -65,11 +64,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zerodev.subscriptionmanager.R
 import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
-import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
 import com.zerodev.subscriptionmanager.core.utils.validateFormInput
+import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
+import com.zerodev.subscriptionmanager.ui.components.CustomInputField
+import com.zerodev.subscriptionmanager.ui.components.SegmentedControl
+import com.zerodev.subscriptionmanager.ui.components.PopularServiceItem
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -196,88 +198,22 @@ fun AddSubscriptionBottomSheet(
         // Title
         Text(
             text = if (isEditMode) "Edit Subscription" else "New Subscription",
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = Color.White
         )
 
         // Large Cost Section
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            val costLabel = when (selectedBillingCycle) {
-                BillingCycle.WEEKLY -> "Weekly Cost"
-                BillingCycle.MONTHLY -> "Monthly Cost"
-                BillingCycle.YEARLY -> "Yearly Cost"
-                BillingCycle.CUSTOM -> "Custom Cycle Cost"
-            }
-            Text(
-                text = costLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                textAlign = TextAlign.Center
-
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = currency.symbol,
-                    style = TextStyle(
-                        color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier.padding(end = 4.dp)
-                )
-                BasicTextField(
-                    value = price,
-                    onValueChange = { input ->
-                        price = CurrencyFormatter.formatInput(input, currency)
-                        if (priceError != null) priceError = null
-                    },
-                    textStyle = TextStyle(
-                        color = Color.White,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    ),
-                    cursorBrush = SolidColor(com.zerodev.subscriptionmanager.ui.theme.Primary),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Decimal,
-                        imeAction = ImeAction.Next
-                    ),
-                    singleLine = true,
-                    decorationBox = { innerTextField ->
-                        Box(contentAlignment = Alignment.Center) {
-                            if (price.isEmpty()) {
-                                Text(
-                                    text = "0.00",
-                                    style = TextStyle(
-                                        color = Color.White.copy(alpha = 0.3f),
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center
-                                    )
-                                )
-                            }
-                            innerTextField()
-                        }
-                    }
-                )
-            }
-            if (priceError != null) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = priceError ?: "",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
-        }
+        PriceSection(
+            price = price,
+            onPriceChange = { input ->
+                price = CurrencyFormatter.formatInput(input, currency)
+                if (priceError != null) priceError = null
+            },
+            currencySymbol = currency.symbol,
+            priceError = priceError,
+            selectedBillingCycle = selectedBillingCycle
+        )
 
         // Service Name Input
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -287,6 +223,7 @@ fun AddSubscriptionBottomSheet(
                 color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
                 fontWeight = FontWeight.Bold
             )
+            val brandIcon = remember(name) { getSubscriptionIcon(name) }
             CustomInputField(
                 value = name,
                 onValueChange = {
@@ -295,157 +232,53 @@ fun AddSubscriptionBottomSheet(
                 },
                 placeholder = "e.g. Netflix, Spotify",
                 leadingIcon = {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.Label,
-                        contentDescription = "Service Name",
-                        tint = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    if (brandIcon != R.drawable.subtrack) {
+                        Icon(
+                            painter = painterResource(id = brandIcon),
+                            contentDescription = "Brand Logo",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = "Service Name",
+                            tint = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 },
                 isError = nameError != null,
                 errorMessage = nameError
             )
         }
 
-        // Popular Services Section
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = "POPULAR SERVICES",
-                style = MaterialTheme.typography.labelMedium,
-                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                fontWeight = FontWeight.Bold
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                PopularServiceItem(
-                    name = "Netflix",
-                    iconRes = R.drawable.netflix,
-                    onClick = { name = "Netflix" }
-                )
-                PopularServiceItem(
-                    name = "Spotify",
-                    iconRes = R.drawable.spotify,
-                    onClick = { name = "Spotify" }
-                )
-                PopularServiceItem(
-                    name = "YouTube",
-                    iconRes = R.drawable.youtube,
-                    onClick = { name = "YouTube" }
-                )
-                PopularServiceItem(
-                    name = "ChatGPT",
-                    iconRes = R.drawable.chatgpt,
-                    onClick = { name = "ChatGPT" }
-                )
+        // Popular Services Row
+        PopularServicesSection(
+            onServiceSelect = { selectedName ->
+                name = selectedName
+                if (nameError != null) nameError = null
             }
-        }
+        )
 
         // Billing Cycle Section
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = "BILLING CYCLE",
-                style = MaterialTheme.typography.labelMedium,
-                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                fontWeight = FontWeight.Bold
-            )
-            SegmentedControl(
-                selectedItem = selectedBillingCycle,
-                onItemSelect = { selectedBillingCycle = it }
-            )
-        }
-
-        // Conditional Custom Days Input (Every [ 1 ] Days layout spec)
-        if (selectedBillingCycle == BillingCycle.CUSTOM) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Every",
-                        color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-
-                    OutlinedTextField(
-                        value = customDays,
-                        onValueChange = { input ->
-                            customDays = input.filter { it.isDigit() }
-                            val days = customDays.toIntOrNull()
-                            customDaysError = when {
-                                customDays.isBlank() -> null
-                                days == null || days < 1 -> "Must be >= 1"
-                                days > 365 -> "Must be <= 365"
-                                else -> null
-                            }
-                        },
-                        placeholder = {
-                            Text(
-                                text = "1",
-                                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
-                            )
-                        },
-                        textStyle = TextStyle(
-                            color = Color.White,
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        ),
-                        singleLine = true,
-                        shape = RoundedCornerShape(16.dp),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = { focusManager.clearFocus() }
-                        ),
-                        isError = customDaysError != null,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                            unfocusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                            focusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
-                            unfocusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
-                            errorContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                            errorBorderColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier.width(80.dp)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(com.zerodev.subscriptionmanager.ui.theme.DarkBackground)
-                            .clickable { /* no-op container matches spec mockup layout */ }
-                            .padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        Text(
-                            text = "Days",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
+        BillingCycleSection(
+            selectedBillingCycle = selectedBillingCycle,
+            onBillingCycleSelect = { selectedBillingCycle = it },
+            customDays = customDays,
+            onCustomDaysChange = { input ->
+                customDays = input.filter { it.isDigit() }
+                val days = customDays.toIntOrNull()
+                customDaysError = when {
+                    customDays.isBlank() -> null
+                    days == null || days < 1 -> "Must be >= 1"
+                    days > 365 -> "Must be <= 365"
+                    else -> null
                 }
-
-                if (customDaysError != null) {
-                    Text(
-                        text = customDaysError ?: "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                }
-            }
-        }
+            },
+            customDaysError = customDaysError,
+            focusManager = focusManager
+        )
 
         // First Payment / Start Date Picker
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -584,7 +417,7 @@ fun AddSubscriptionBottomSheet(
                     onClick = {
                         val updatedSubscription = existingSubscription.copy(
                             name = name.trim(),
-                            price = price.toDouble(),
+                            price = CurrencyFormatter.parse(price, currency),
                             billingCycle = selectedBillingCycle,
                             startDate = startDate
                         )
@@ -608,129 +441,228 @@ fun AddSubscriptionBottomSheet(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CustomInputField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    isError: Boolean = false,
-    errorMessage: String? = null,
-    readOnly: Boolean = false,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default,
-    modifier: Modifier = Modifier
-) {
-    Column(modifier = modifier) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            placeholder = { Text(placeholder, color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary) },
-            leadingIcon = leadingIcon,
-            trailingIcon = trailingIcon,
-            readOnly = readOnly,
-            interactionSource = interactionSource,
-            keyboardOptions = keyboardOptions,
-            keyboardActions = keyboardActions,
-            isError = isError,
-            singleLine = true,
-            shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                unfocusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                focusedBorderColor = if (isError) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
-                unfocusedBorderColor = if (isError) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                cursorColor = com.zerodev.subscriptionmanager.ui.theme.Primary,
-                errorContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
-                errorBorderColor = MaterialTheme.colorScheme.error
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-        if (isError && errorMessage != null) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = errorMessage,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun SegmentedControl(
-    selectedItem: BillingCycle,
-    onItemSelect: (BillingCycle) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .background(com.zerodev.subscriptionmanager.ui.theme.DarkBackground, RoundedCornerShape(14.dp))
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        BillingCycle.entries.forEach { item ->
-            val isSelected = selectedItem == item
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(if (isSelected) com.zerodev.subscriptionmanager.ui.theme.CardBackground else Color.Transparent)
-                    .clickable { onItemSelect(item) }
-                    .padding(vertical = 10.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = item.displayName,
-                    color = if (isSelected) Color.White else com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PopularServiceItem(
-    name: String,
-    iconRes: Int,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun PriceSection(
+    price: String,
+    onPriceChange: (String) -> Unit,
+    currencySymbol: String,
+    priceError: String?,
+    selectedBillingCycle: BillingCycle
 ) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-            .clickable(onClick = onClick)
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFF1E1E1E)),
-            contentAlignment = Alignment.Center
+        val costLabel = when (selectedBillingCycle) {
+            BillingCycle.WEEKLY -> "Weekly Cost"
+            BillingCycle.MONTHLY -> "Monthly Cost"
+            BillingCycle.YEARLY -> "Yearly Cost"
+            BillingCycle.CUSTOM -> "Custom Cycle Cost"
+        }
+        Text(
+            text = costLabel,
+            style = MaterialTheme.typography.bodyMedium,
+            color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(36.dp)
+            Text(
+                text = currencySymbol,
+                style = TextStyle(
+                    color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.padding(end = 4.dp)
+            )
+            BasicTextField(
+                value = price,
+                onValueChange = onPriceChange,
+                textStyle = TextStyle(
+                    color = Color.White,
+                    fontSize = 44.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                ),
+                cursorBrush = SolidColor(com.zerodev.subscriptionmanager.ui.theme.Primary),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal,
+                    imeAction = ImeAction.Next
+                ),
+                singleLine = true,
+                decorationBox = { innerTextField ->
+                    Box(contentAlignment = Alignment.Center) {
+                        if (price.isEmpty()) {
+                            Text(
+                                text = "0.00",
+                                style = TextStyle(
+                                    color = Color.White.copy(alpha = 0.3f),
+                                    fontSize = 44.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center
+                                )
+                            )
+                        }
+                        innerTextField()
+                    }
+                }
             )
         }
-        Spacer(modifier = Modifier.height(6.dp))
+        if (priceError != null) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = priceError,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+    }
+}
+
+@Composable
+private fun PopularServicesSection(
+    onServiceSelect: (String) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            text = name,
-            style = MaterialTheme.typography.bodySmall,
+            text = "POPULAR SERVICES",
+            style = MaterialTheme.typography.labelMedium,
             color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Bold
         )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            PopularServiceItem(
+                name = "Netflix",
+                iconRes = R.drawable.netflix,
+                onClick = { onServiceSelect("Netflix") }
+            )
+            PopularServiceItem(
+                name = "Spotify",
+                iconRes = R.drawable.spotify,
+                onClick = { onServiceSelect("Spotify") }
+            )
+            PopularServiceItem(
+                name = "YouTube",
+                iconRes = R.drawable.youtube,
+                onClick = { onServiceSelect("YouTube") }
+            )
+            PopularServiceItem(
+                name = "ChatGPT",
+                iconRes = R.drawable.chatgpt,
+                onClick = { onServiceSelect("ChatGPT") }
+            )
+        }
+    }
+}
+
+@Composable
+private fun BillingCycleSection(
+    selectedBillingCycle: BillingCycle,
+    onBillingCycleSelect: (BillingCycle) -> Unit,
+    customDays: String,
+    onCustomDaysChange: (String) -> Unit,
+    customDaysError: String?,
+    focusManager: androidx.compose.ui.focus.FocusManager
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "BILLING CYCLE",
+                style = MaterialTheme.typography.labelMedium,
+                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                fontWeight = FontWeight.Bold
+            )
+            SegmentedControl(
+                selectedItem = selectedBillingCycle,
+                onItemSelect = onBillingCycleSelect
+            )
+        }
+
+        if (selectedBillingCycle == BillingCycle.CUSTOM) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Every",
+                        color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+
+                    OutlinedTextField(
+                        value = customDays,
+                        onValueChange = onCustomDaysChange,
+                        placeholder = {
+                            Text(
+                                text = "1",
+                                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
+                        },
+                        textStyle = TextStyle(
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        ),
+                        singleLine = true,
+                        shape = RoundedCornerShape(16.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = { focusManager.clearFocus() }
+                        ),
+                        isError = customDaysError != null,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
+                            unfocusedContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
+                            focusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
+                            unfocusedBorderColor = if (customDaysError != null) MaterialTheme.colorScheme.error else com.zerodev.subscriptionmanager.ui.theme.Divider,
+                            errorContainerColor = com.zerodev.subscriptionmanager.ui.theme.DarkBackground,
+                            errorBorderColor = MaterialTheme.colorScheme.error
+                        ),
+                        modifier = Modifier.width(80.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(com.zerodev.subscriptionmanager.ui.theme.DarkBackground)
+                            .clickable { /* no-op container matches spec mockup layout */ }
+                            .padding(horizontal = 16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        Text(
+                            text = "Days",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
+
+                if (customDaysError != null) {
+                    Text(
+                        text = customDaysError,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                }
+            }
+        }
     }
 }
