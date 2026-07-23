@@ -63,6 +63,7 @@ import org.koin.androidx.compose.koinViewModel
 fun HomeScreen(
     contentPadding: PaddingValues,
     onSeeAllClick: () -> Unit = {},
+    onNotificationClick: () -> Unit = {},
     viewModel: HomeViewModel = koinViewModel()
 ) {
     val scope = rememberCoroutineScope()
@@ -125,9 +126,8 @@ fun HomeScreen(
                 },
                 actions = {
                     AppHeaderActions(
-                        onClick = {
-                            // TODO: Navigate to Notification Screen
-                        }
+                        onClick = onNotificationClick,
+                        hasUnreadNotifications = uiState.hasUnreadNotifications
                     )
                 }
             )

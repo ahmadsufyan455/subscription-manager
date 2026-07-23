@@ -18,17 +18,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
+import com.zerodev.subscriptionmanager.data.repository.NotificationRepository
+
 data class HomeUiState(
     val subscriptions: List<Subscription> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
     val totalSpending: Double = 0.0,
-    val activeSubscriptionsCount: Int = 0
+    val activeSubscriptionsCount: Int = 0,
+    val hasUnreadNotifications: Boolean = false
 )
 
 class HomeViewModel(
     private val application: Application,
-    private val repository: SubscriptionRepository
+    private val repository: SubscriptionRepository,
+    private val notificationRepository: NotificationRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -36,6 +40,19 @@ class HomeViewModel(
 
     init {
         loadSubscriptions()
+        observeUnreadNotifications()
+    }
+
+    private fun observeUnreadNotifications() {
+        viewModelScope.launch {
+            notificationRepository.getUnreadCount()
+                .catch { e -> e.printStackTrace() }
+                .collect { count ->
+                    _uiState.value = _uiState.value.copy(
+                        hasUnreadNotifications = count > 0
+                    )
+                }
+        }
     }
 
     private fun loadSubscriptions() {
@@ -44,7 +61,7 @@ class HomeViewModel(
 
             // Process renewals first (check if any subscriptions need renewal)
             try {
-                RenewalHelper.processRenewals(application, repository)
+                RenewalHelper.processRenewals(application, repository, notificationRepository)
             } catch (e: Exception) {
                 e.printStackTrace()
             }

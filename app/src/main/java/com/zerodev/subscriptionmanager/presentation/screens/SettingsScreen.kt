@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.widget.Toast
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -149,7 +150,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         // ── Page Title ──────────────────────────────────────────────────────
         Text(
             text = "Settings",
-            fontSize = 28.sp,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = TextPrimary,
             modifier = Modifier

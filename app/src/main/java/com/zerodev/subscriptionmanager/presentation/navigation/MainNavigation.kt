@@ -37,6 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.zerodev.subscriptionmanager.presentation.screens.AddSubscriptionBottomSheet
 import com.zerodev.subscriptionmanager.presentation.screens.HomeScreen
+import com.zerodev.subscriptionmanager.presentation.screens.NotificationScreen
 import com.zerodev.subscriptionmanager.presentation.screens.SubscriptionScreen
 import com.zerodev.subscriptionmanager.presentation.screens.SettingsScreen
 import dev.chrisbanes.haze.hazeEffect
@@ -59,10 +60,10 @@ fun MainScreen(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute != "all_subscriptions"
+    val showBottomBar = currentRoute != "all_subscriptions" && currentRoute != "notifications"
 
     LaunchedEffect(currentRoute) {
-        if (currentRoute == "all_subscriptions") {
+        if (currentRoute == "all_subscriptions" || currentRoute == "notifications") {
             showAddSubscriptionSheet = false
         }
     }
@@ -103,6 +104,9 @@ fun MainScreen(
                     contentPadding = contentPadding,
                     onSeeAllClick = {
                         navController.navigate("all_subscriptions")
+                    },
+                    onNotificationClick = {
+                        navController.navigate("notifications")
                     }
                 )
             }
@@ -110,6 +114,13 @@ fun MainScreen(
             composable("all_subscriptions") {
                 SubscriptionScreen(
                     contentPadding = contentPadding,
+                    onBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            composable("notifications") {
+                NotificationScreen(
                     onBack = {
                         navController.popBackStack()
                     }

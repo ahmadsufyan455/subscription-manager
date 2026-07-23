@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -67,8 +68,10 @@ fun AppHeaderNavIcon(modifier: Modifier = Modifier) {
 @Composable
 fun AppHeaderActions(
     onClick: () -> Unit,
+    hasUnreadNotifications: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val iconRes = if (hasUnreadNotifications) R.drawable.ic_notif_fill else R.drawable.ic_notif
     Box(
         modifier = modifier
             .padding(end = 16.dp)
@@ -83,9 +86,9 @@ fun AppHeaderActions(
         contentAlignment = Alignment.Center
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_notif),
+            painter = painterResource(iconRes),
             contentDescription = "Notifications",
-            tint = MaterialTheme.colorScheme.onSurface,
+            tint = Color.Unspecified,
             modifier = Modifier.size(18.dp)
         )
     }
