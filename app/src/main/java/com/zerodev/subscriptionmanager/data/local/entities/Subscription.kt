@@ -3,7 +3,9 @@ package com.zerodev.subscriptionmanager.data.local.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 enum class BillingCycle(val displayName: String, val daysInCycle: Int) {
     WEEKLY("Weekly", 7),
     MONTHLY("Monthly", 30),
@@ -16,12 +18,14 @@ enum class BillingCycle(val displayName: String, val daysInCycle: Int) {
     }
 }
 
+@Serializable
 enum class SubscriptionStatus {
     ACTIVE,
     CANCELLED,
     EXPIRED
 }
 
+@Serializable
 @Entity(tableName = "subscriptions")
 data class Subscription(
     @PrimaryKey(autoGenerate = true)

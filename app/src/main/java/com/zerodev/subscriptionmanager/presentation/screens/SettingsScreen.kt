@@ -37,6 +37,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +55,7 @@ import com.zerodev.subscriptionmanager.R
 import com.zerodev.subscriptionmanager.core.helper.NotificationScheduler
 import com.zerodev.subscriptionmanager.core.utils.Currency
 import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
+import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.theme.CardBackground
 import com.zerodev.subscriptionmanager.ui.theme.DarkBackground
 import com.zerodev.subscriptionmanager.ui.theme.Divider
@@ -59,6 +63,7 @@ import com.zerodev.subscriptionmanager.ui.theme.Primary
 import com.zerodev.subscriptionmanager.ui.theme.TextPrimary
 import com.zerodev.subscriptionmanager.ui.theme.TextSecondary
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 // ─── Accent colours matching the design ───────────────────────────────────────
 private val CurrencyIconBg   = Color(0xFF1B3A2B)   // dark green
@@ -76,6 +81,7 @@ private val DeleteIconTint   = Color(0xFFFF3B30)   // red
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val viewModel: HomeViewModel = koinViewModel()
     val sharedPrefs = remember {
         context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
     }
@@ -98,6 +104,21 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
+
+    // SAF launcher — opens the system file picker so the user picks the save location
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportSubscriptions(uri) { success ->
+                Toast.makeText(
+                    context,
+                    if (success) "Data exported successfully" else "Export failed. Please try again.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
 
     Column(
         modifier = modifier
@@ -205,6 +226,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         contentDescription = null,
                         tint = TextSecondary,
                         modifier = Modifier.size(20.dp)
+                    )
+                },
+                onClick = {
+                    exportLauncher.launch(
+                        com.zerodev.subscriptionmanager.core.helper.ExportHelper.suggestedFileName()
                     )
                 }
             )

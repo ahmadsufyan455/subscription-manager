@@ -1,13 +1,16 @@
 package com.zerodev.subscriptionmanager.presentation.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
+import com.zerodev.subscriptionmanager.core.helper.ExportHelper
 import com.zerodev.subscriptionmanager.core.helper.NotificationTracker
 import com.zerodev.subscriptionmanager.core.helper.RenewalHelper
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -126,5 +129,19 @@ class HomeViewModel(
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    /**
+     * Fetches all subscriptions and writes them as JSON to the [uri] chosen
+     * by the user via the SAF file picker.
+     *
+     * [onResult] is called on the main thread with `true` on success.
+     */
+    fun exportSubscriptions(uri: Uri, onResult: (success: Boolean) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val subscriptions = repository.getAllSubscriptionsSnapshot()
+            val success = ExportHelper.exportToJson(application, uri, subscriptions)
+            launch(Dispatchers.Main) { onResult(success) }
+        }
     }
 }
