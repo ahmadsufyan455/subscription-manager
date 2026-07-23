@@ -2,6 +2,7 @@ package com.zerodev.subscriptionmanager.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -23,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -72,6 +75,7 @@ import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.components.CustomInputField
 import com.zerodev.subscriptionmanager.ui.components.SegmentedControl
 import com.zerodev.subscriptionmanager.ui.components.PopularServiceItem
+import com.zerodev.subscriptionmanager.ui.components.DetailSubscriptionContent
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -187,210 +191,218 @@ fun AddSubscriptionBottomSheet(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
-    ) {
-        // Title
-        Text(
-            text = if (isEditMode) "Edit Subscription" else "New Subscription",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
+    if (isEditMode && existingSubscription != null) {
+        DetailSubscriptionContent(
+            existingSubscription = existingSubscription,
+            currency = currency,
+            onCancelClick = { showCancelConfirmation = true }
         )
-
-        // Large Cost Section
-        PriceSection(
-            price = price,
-            onPriceChange = { input ->
-                price = CurrencyFormatter.formatInput(input, currency)
-                if (priceError != null) priceError = null
-            },
-            currencySymbol = currency.symbol,
-            priceError = priceError,
-            selectedBillingCycle = selectedBillingCycle
-        )
-
-        // Service Name Input
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    } else {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // Title
             Text(
-                text = "SERVICE NAME",
-                style = MaterialTheme.typography.labelMedium,
-                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                fontWeight = FontWeight.Bold
+                text = if (isEditMode) "Edit Subscription" else "New Subscription",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
-            val brandIcon = remember(name) { getSubscriptionIcon(name) }
-            CustomInputField(
-                value = name,
-                onValueChange = {
-                    name = it
-                    if (nameError != null) nameError = null
+
+            // Large Cost Section
+            PriceSection(
+                price = price,
+                onPriceChange = { input ->
+                    price = CurrencyFormatter.formatInput(input, currency)
+                    if (priceError != null) priceError = null
                 },
-                placeholder = "e.g. Netflix, Spotify",
-                leadingIcon = {
-                    if (brandIcon != R.drawable.subtrack) {
+                currencySymbol = currency.symbol,
+                priceError = priceError,
+                selectedBillingCycle = selectedBillingCycle
+            )
+
+            // Service Name Input
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "SERVICE NAME",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                    fontWeight = FontWeight.Bold
+                )
+                val brandIcon = remember(name) { getSubscriptionIcon(name) }
+                CustomInputField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        if (nameError != null) nameError = null
+                    },
+                    placeholder = "e.g. Netflix, Spotify",
+                    leadingIcon = {
+                        if (brandIcon != R.drawable.subtrack) {
+                            Icon(
+                                painter = painterResource(id = brandIcon),
+                                contentDescription = "Brand Logo",
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Label,
+                                contentDescription = "Service Name",
+                                tint = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    },
+                    isError = nameError != null,
+                    errorMessage = nameError
+                )
+            }
+
+            // Popular Services Row
+            PopularServicesSection(
+                onServiceSelect = { selectedName ->
+                    name = selectedName
+                    if (nameError != null) nameError = null
+                }
+            )
+
+            // Billing Cycle Section
+            BillingCycleSection(
+                selectedBillingCycle = selectedBillingCycle,
+                onBillingCycleSelect = { selectedBillingCycle = it },
+                customDays = customDays,
+                onCustomDaysChange = { input ->
+                    customDays = input.filter { it.isDigit() }
+                    val days = customDays.toIntOrNull()
+                    customDaysError = when {
+                        customDays.isBlank() -> null
+                        days == null || days < 1 -> "Must be >= 1"
+                        days > 365 -> "Must be <= 365"
+                        else -> null
+                    }
+                },
+                customDaysError = customDaysError,
+                focusManager = focusManager
+            )
+
+            // First Payment / Start Date Picker
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "FIRST PAYMENT",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                    fontWeight = FontWeight.Bold
+                )
+                val dateFormat = "dd/MM/yyyy"
+                CustomInputField(
+                    value = SimpleDateFormat(dateFormat, Locale.getDefault()).format(Date(startDate)),
+                    onValueChange = {},
+                    placeholder = "dd/mm/yyyy",
+                    trailingIcon = {
                         Icon(
-                            painter = painterResource(id = brandIcon),
-                            contentDescription = "Brand Logo",
-                            tint = Color.Unspecified,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Label,
-                            contentDescription = "Service Name",
+                            painter = painterResource(id = R.drawable.ic_calendar),
+                            contentDescription = "Select date",
                             tint = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
                             modifier = Modifier.size(24.dp)
                         )
-                    }
-                },
-                isError = nameError != null,
-                errorMessage = nameError
-            )
-        }
-
-        // Popular Services Row
-        PopularServicesSection(
-            onServiceSelect = { selectedName ->
-                name = selectedName
-                if (nameError != null) nameError = null
-            }
-        )
-
-        // Billing Cycle Section
-        BillingCycleSection(
-            selectedBillingCycle = selectedBillingCycle,
-            onBillingCycleSelect = { selectedBillingCycle = it },
-            customDays = customDays,
-            onCustomDaysChange = { input ->
-                customDays = input.filter { it.isDigit() }
-                val days = customDays.toIntOrNull()
-                customDaysError = when {
-                    customDays.isBlank() -> null
-                    days == null || days < 1 -> "Must be >= 1"
-                    days > 365 -> "Must be <= 365"
-                    else -> null
-                }
-            },
-            customDaysError = customDaysError,
-            focusManager = focusManager
-        )
-
-        // First Payment / Start Date Picker
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = "FIRST PAYMENT",
-                style = MaterialTheme.typography.labelMedium,
-                color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                fontWeight = FontWeight.Bold
-            )
-            val dateFormat = "dd/MM/yyyy"
-            CustomInputField(
-                value = SimpleDateFormat(dateFormat, Locale.getDefault()).format(Date(startDate)),
-                onValueChange = {},
-                placeholder = "dd/mm/yyyy",
-                trailingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_calendar),
-                        contentDescription = "Select date",
-                        tint = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                },
-                readOnly = true,
-                interactionSource = interactionSource,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Save Button
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            onClick = {
-                if (validateFormInput(name, price, currency, { nameError = it }, { priceError = it })) {
-                    val cycleDays =
-                        if (selectedBillingCycle == BillingCycle.CUSTOM) customDays.toIntOrNull() else null
-                    val parsedPrice = CurrencyFormatter.parse(price, currency)
-                    val priceInUsd = CurrencyFormatter.convertToUsd(parsedPrice, currency)
-                    if (isEditMode && existingSubscription != null) {
-                        val updatedSubscription = existingSubscription.copy(
-                            name = name.trim(),
-                            price = priceInUsd,
-                            billingCycle = selectedBillingCycle,
-                            customCycleDays = cycleDays,
-                            startDate = startDate
-                        )
-                        viewModel.updateSubscription(updatedSubscription)
-                    } else {
-                        val subscription = Subscription(
-                            name = name.trim(),
-                            price = priceInUsd,
-                            billingCycle = selectedBillingCycle,
-                            customCycleDays = cycleDays,
-                            startDate = startDate
-                        )
-                        viewModel.addSubscription(subscription)
-                    }
-                    onDismiss()
-                }
-            },
-            enabled = isButtonEnable,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = com.zerodev.subscriptionmanager.ui.theme.Primary,
-                disabledContainerColor = com.zerodev.subscriptionmanager.ui.theme.Primary.copy(alpha = 0.5f)
-            ),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = if (isEditMode) "Update Subscription" else "Save Subscription",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        color = Color.White,
-                    ),
-                    fontWeight = FontWeight.Bold
+                    },
+                    readOnly = true,
+                    interactionSource = interactionSource,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-        }
 
-        // Cancel / Delete Subscription button (Edit Mode only)
-        if (isEditMode && existingSubscription != null) {
-            OutlinedButton(
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Save Button
+            Button(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                onClick = { showCancelConfirmation = true },
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.error
-                ),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
+                onClick = {
+                    if (validateFormInput(name, price, currency, { nameError = it }, { priceError = it })) {
+                        val cycleDays =
+                            if (selectedBillingCycle == BillingCycle.CUSTOM) customDays.toIntOrNull() else null
+                        val parsedPrice = CurrencyFormatter.parse(price, currency)
+                        val priceInUsd = CurrencyFormatter.convertToUsd(parsedPrice, currency)
+                        if (isEditMode && existingSubscription != null) {
+                            val updatedSubscription = existingSubscription.copy(
+                                name = name.trim(),
+                                price = priceInUsd,
+                                billingCycle = selectedBillingCycle,
+                                customCycleDays = cycleDays,
+                                startDate = startDate
+                            )
+                            viewModel.updateSubscription(updatedSubscription)
+                        } else {
+                            val subscription = Subscription(
+                                name = name.trim(),
+                                price = priceInUsd,
+                                billingCycle = selectedBillingCycle,
+                                customCycleDays = cycleDays,
+                                startDate = startDate
+                            )
+                            viewModel.addSubscription(subscription)
+                        }
+                        onDismiss()
+                    }
+                },
+                enabled = isButtonEnable,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = com.zerodev.subscriptionmanager.ui.theme.Primary,
+                    disabledContainerColor = com.zerodev.subscriptionmanager.ui.theme.Primary.copy(alpha = 0.5f)
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text(
-                    text = "Cancel Subscription",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = if (isEditMode) "Update Subscription" else "Save Subscription",
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            color = Color.White,
+                        ),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Cancel / Delete Subscription button (Edit Mode only)
+            if (isEditMode && existingSubscription != null) {
+                OutlinedButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    onClick = { showCancelConfirmation = true },
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.error
+                    ),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text(
+                        text = "Cancel Subscription",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         }
     }
@@ -415,13 +427,7 @@ fun AddSubscriptionBottomSheet(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val updatedSubscription = existingSubscription.copy(
-                            name = name.trim(),
-                            price = CurrencyFormatter.parse(price, currency),
-                            billingCycle = selectedBillingCycle,
-                            startDate = startDate
-                        )
-                        viewModel.cancelSubscription(updatedSubscription)
+                        viewModel.cancelSubscription(existingSubscription)
                         showCancelConfirmation = false
                         onDismiss()
                     },
