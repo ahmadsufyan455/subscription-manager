@@ -17,6 +17,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +57,16 @@ fun MainScreen(
     )
     var showAddSubscriptionSheet by remember { mutableStateOf(false) }
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val showBottomBar = currentRoute != "all_subscriptions"
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == "all_subscriptions") {
+            showAddSubscriptionSheet = false
+        }
+    }
+
     // Show the modal sheet only when needed
     if (showAddSubscriptionSheet) {
         ModalBottomSheet(
@@ -72,11 +83,13 @@ fun MainScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.surface,
         bottomBar = {
-            BottomNavigationBar(
-                navController = navController,
-                onAddSubscriptionClick = { showAddSubscriptionSheet = true },
-                modifier = Modifier.hazeEffect(hazeState, style = HazeMaterials.ultraThin())
-            )
+            if (showBottomBar) {
+                BottomNavigationBar(
+                    navController = navController,
+                    onAddSubscriptionClick = { showAddSubscriptionSheet = true },
+                    modifier = Modifier.hazeEffect(hazeState, style = HazeMaterials.ultraThin())
+                )
+            }
         }
     ) { contentPadding ->
         NavHost(
