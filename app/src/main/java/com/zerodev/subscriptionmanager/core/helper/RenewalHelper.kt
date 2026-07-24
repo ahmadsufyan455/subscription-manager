@@ -41,9 +41,16 @@ object RenewalHelper {
         subscriptions.forEach { subscription ->
             when (subscription.status) {
                 SubscriptionStatus.ACTIVE -> {
-                    // Check if needs renewal
-                    if (subscription.needsRenewal()) {
-                        renewSubscription(context, subscription, repository, notificationRepository)
+                    val currentPeriodStart = subscription.getCurrentBillingPeriodStart()
+                    val isAlreadyProcessed = NotificationTracker.isRenewalProcessed(
+                        context,
+                        subscription.id,
+                        currentPeriodStart
+                    )
+
+                    // Check if needs renewal and not yet processed for this period
+                    if (subscription.needsRenewal() && !isAlreadyProcessed) {
+                        renewSubscription(context, subscription, currentPeriodStart, notificationRepository)
                     }
                 }
 
@@ -63,36 +70,30 @@ object RenewalHelper {
     }
 
     /**
-     * Renew an ACTIVE subscription by updating its start date
+     * Handle renewal for an ACTIVE subscription without mutating original startDate
      */
     private suspend fun renewSubscription(
         context: Context,
         subscription: Subscription,
-        repository: SubscriptionRepository,
+        currentPeriodStart: Long,
         notificationRepository: NotificationRepository?
     ) {
-        val newStartDate = subscription.getCurrentBillingPeriodStart()
-
-        if (newStartDate != subscription.startDate) {
-            val renewedSubscription = subscription.copy(
-                startDate = newStartDate
+        // Save notification to database
+        val formattedPrice = String.format("%.2f", subscription.price)
+        notificationRepository?.insertNotification(
+            NotificationEntity(
+                title = "Payment Successful",
+                message = "Your payment of \$$formattedPrice for ${subscription.name} was successful.",
+                type = NotificationType.PAYMENT_SUCCESSFUL,
+                subscriptionId = subscription.id
             )
-            repository.updateSubscription(renewedSubscription)
+        )
 
-            // Save notification to database
-            val formattedPrice = String.format("%.2f", subscription.price)
-            notificationRepository?.insertNotification(
-                NotificationEntity(
-                    title = "Payment Successful",
-                    message = "Your payment of \$$formattedPrice for ${subscription.name} was successful.",
-                    type = NotificationType.PAYMENT_SUCCESSFUL,
-                    subscriptionId = subscription.id
-                )
-            )
+        // Clear notification tracking so reminder notifications can be sent again for new billing cycle
+        NotificationTracker.clearTrackingForSubscription(context, subscription.id)
 
-            // Clear notification tracking so notifications can be sent again for new billing cycle
-            NotificationTracker.clearTrackingForSubscription(context, subscription.id)
-        }
+        // Mark renewal as processed for this period
+        NotificationTracker.markRenewalProcessed(context, subscription.id, currentPeriodStart)
     }
 
     /**

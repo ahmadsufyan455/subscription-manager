@@ -51,4 +51,30 @@ object NotificationTracker {
 
         }
     }
+
+    /**
+     * Check if renewal has been processed for this subscription and period start
+     */
+    fun isRenewalProcessed(
+        context: Context,
+        subscriptionId: Int,
+        periodStart: Long
+    ): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val key = "renewal_${subscriptionId}_${periodStart}"
+        return prefs.getBoolean(key, false)
+    }
+
+    /**
+     * Mark renewal as processed for this subscription and period start
+     */
+    fun markRenewalProcessed(
+        context: Context,
+        subscriptionId: Int,
+        periodStart: Long
+    ) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val key = "renewal_${subscriptionId}_${periodStart}"
+        prefs.edit { putBoolean(key, true) }
+    }
 }

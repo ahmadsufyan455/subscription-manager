@@ -216,7 +216,8 @@ private fun calculateMonthlySpending(
         val endOfMonth = yearMonth.atEndOfMonth()
 
         subscriptions.sumOf { sub ->
-            val startLocalDate = Instant.ofEpochMilli(sub.startDate)
+            val effectiveStartDateTimestamp = if (sub.createdAt > 0) minOf(sub.startDate, sub.createdAt) else sub.startDate
+            val startLocalDate = Instant.ofEpochMilli(effectiveStartDateTimestamp)
                 .atZone(zoneId)
                 .toLocalDate()
 
@@ -225,24 +226,14 @@ private fun calculateMonthlySpending(
                 return@sumOf 0.0
             }
 
-            val cycleDays = when (sub.billingCycle) {
-                BillingCycle.WEEKLY -> 7
-                BillingCycle.MONTHLY -> 30
-                BillingCycle.YEARLY -> 365
-                BillingCycle.CUSTOM -> sub.customCycleDays ?: 30
-            }
-            val incrementDays = if (cycleDays <= 0) 30 else cycleDays
-
-            // Calculate billing occurrences in this specific month
-            var billingDate = startLocalDate
-            var occurrences = 0
-
             // If the subscription was cancelled, it stopped billing after the next billing date following cancellation.
             val cancelLimitDate = sub.cancelledAt?.let {
                 Instant.ofEpochMilli(it).atZone(zoneId).toLocalDate()
             }
 
             val stopDate = cancelLimitDate
+            var billingDate = startLocalDate
+            var occurrences = 0
 
             while (!billingDate.isAfter(endOfMonth)) {
                 // Check if billing date is within this month
@@ -253,7 +244,17 @@ private fun calculateMonthlySpending(
                         occurrences++
                     }
                 }
-                billingDate = billingDate.plusDays(incrementDays.toLong())
+                
+                billingDate = when (sub.billingCycle) {
+                    BillingCycle.WEEKLY -> billingDate.plusWeeks(1)
+                    BillingCycle.MONTHLY -> billingDate.plusMonths(1)
+                    BillingCycle.YEARLY -> billingDate.plusYears(1)
+                    BillingCycle.CUSTOM -> {
+                        val cycleDays = sub.customCycleDays ?: 30
+                        val incrementDays = if (cycleDays <= 0) 30 else cycleDays
+                        billingDate.plusDays(incrementDays.toLong())
+                    }
+                }
             }
 
             occurrences * sub.price
