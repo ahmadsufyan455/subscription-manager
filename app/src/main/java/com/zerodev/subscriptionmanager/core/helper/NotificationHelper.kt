@@ -5,11 +5,15 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.zerodev.subscriptionmanager.MainActivity
 import com.zerodev.subscriptionmanager.R
+import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 
 object NotificationHelper {
@@ -71,22 +75,44 @@ object NotificationHelper {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+        val brandIconRes = getSubscriptionIcon(subscription.name)
+        val largeIconBitmap = getBitmapFromDrawable(context, brandIconRes)
+
+        val notificationBuilder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.subtrack)
-            .setLargeIcon(
-                BitmapFactory.decodeResource(
-                    context.resources, R.drawable.subtrack
-                )
-            )
             .setContentTitle(title)
             .setContentText(message)
             .setContentIntent(pendingIntent)
             .setPriority(priority)
             .setAutoCancel(true)
-            .build()
+
+        if (largeIconBitmap != null) {
+            notificationBuilder.setLargeIcon(largeIconBitmap)
+        }
 
         // Use subscription ID + days as unique notification ID
         val notificationId = "${subscription.id}_$daysRemaining".hashCode()
-        notificationManager.notify(notificationId, notification)
+        notificationManager.notify(notificationId, notificationBuilder.build())
+    }
+
+    /**
+     * Convert any Drawable (VectorDrawable or BitmapDrawable) into a high-resolution Bitmap for notification largeIcon
+     */
+    private fun getBitmapFromDrawable(context: Context, resId: Int): Bitmap? {
+        val drawable = ContextCompat.getDrawable(context, resId) ?: return null
+        if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            return drawable.bitmap
+        }
+
+        val density = context.resources.displayMetrics.density
+        val targetSize = (64 * density).toInt().coerceAtLeast(128)
+        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth.coerceAtLeast(targetSize) else targetSize
+        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight.coerceAtLeast(targetSize) else targetSize
+
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
     }
 }
