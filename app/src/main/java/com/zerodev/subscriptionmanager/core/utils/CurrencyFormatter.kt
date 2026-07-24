@@ -6,7 +6,7 @@ import java.util.Locale
 
 enum class Currency(val code: String, val symbol: String, val locale: Locale, val rateToUsd: Double) {
     USD("USD", "$", Locale.US, 1.0),
-    IDR("IDR", "Rp", Locale("id", "ID"), 16000.0);
+    IDR("IDR", "Rp", Locale("id", "ID"), 17500.0);
 }
 
 object CurrencyFormatter {
