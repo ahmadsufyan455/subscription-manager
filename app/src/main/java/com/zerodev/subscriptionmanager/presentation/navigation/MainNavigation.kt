@@ -113,7 +113,9 @@ fun MainScreen(
                 }
 
                 composable(BottomNavItem.Settings.route) {
-                    SettingsScreen()
+                    SettingsScreen(
+                        contentPadding = contentPadding
+                    )
                 }
             }
 

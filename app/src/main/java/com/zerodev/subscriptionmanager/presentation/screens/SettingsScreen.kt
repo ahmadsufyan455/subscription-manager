@@ -85,7 +85,10 @@ private val DeleteIconTint   = Color(0xFFFF3B30)   // red
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
+fun SettingsScreen(
+    contentPadding: androidx.compose.foundation.layout.PaddingValues = androidx.compose.foundation.layout.PaddingValues(0.dp),
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     val viewModel: HomeViewModel = koinViewModel()
     val sharedPrefs = remember {
@@ -323,7 +326,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(32.dp + contentPadding.calculateBottomPadding()))
     }
 
     // ── Haze Blur Overlay when Bottom Sheet is active ───────────────────────
