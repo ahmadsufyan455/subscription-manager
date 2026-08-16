@@ -40,6 +40,7 @@ object NotificationScheduler {
     /**
      * Cancel the notification check
      */
+    @Suppress("unused")
     fun cancelNotificationCheck(context: Context) {
         WorkManager.getInstance(context)
             .cancelUniqueWork(NOTIFICATION_WORK_NAME)

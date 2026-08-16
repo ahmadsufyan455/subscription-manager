@@ -40,6 +40,7 @@ object RenewalScheduler {
     /**
      * Cancel the renewal check
      */
+    @Suppress("unused")
     fun cancelRenewalCheck(context: Context) {
         WorkManager.getInstance(context)
             .cancelUniqueWork(RENEWAL_WORK_NAME)
