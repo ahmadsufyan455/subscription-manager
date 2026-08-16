@@ -20,10 +20,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLocale
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
+@Suppress("unused")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePickerField(
@@ -90,7 +91,7 @@ fun DatePickerField(
     }
 
     GlobalTextField(
-        value = SimpleDateFormat(dateFormat, Locale.getDefault()).format(Date(selectedDate)),
+        value = SimpleDateFormat(dateFormat, LocalLocale.current.platformLocale).format(Date(selectedDate)),
         onValueChange = {},
         label = label,
         modifier = modifier,

@@ -69,6 +69,7 @@ import kotlinx.coroutines.launch
 import me.saket.swipe.SwipeAction
 import me.saket.swipe.SwipeableActionsBox
 import org.koin.androidx.compose.koinViewModel
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,7 +128,7 @@ fun NotificationScreen(
                                     scope.launch {
                                         isClearingAll = true
                                         val totalDelay = 300L + (uiState.notifications.size * 40L)
-                                        delay(totalDelay)
+                                        delay(totalDelay.milliseconds)
                                         viewModel.deleteAllNotifications()
                                         isClearingAll = false
                                     }

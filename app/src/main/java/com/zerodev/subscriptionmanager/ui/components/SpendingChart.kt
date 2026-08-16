@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,12 +24,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
-import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
+import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
+import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
+import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.marker.rememberDefaultCartesianMarker
 import com.patrykandpatrick.vico.compose.cartesian.marker.DefaultCartesianMarker
 import com.patrykandpatrick.vico.compose.cartesian.marker.LineCartesianLayerMarkerTarget
+import com.patrykandpatrick.vico.compose.cartesian.marker.rememberDefaultCartesianMarker
+import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.common.Insets
 import com.patrykandpatrick.vico.compose.common.LayeredComponent
@@ -38,20 +40,15 @@ import com.patrykandpatrick.vico.compose.common.component.ShapeComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberLineComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
-import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
-import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
-import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.zerodev.subscriptionmanager.core.utils.Currency
 import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
-import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
-import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
+import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.ui.theme.Primary
 import com.zerodev.subscriptionmanager.ui.theme.TextPrimary
 import com.zerodev.subscriptionmanager.ui.theme.TextSecondary
 import java.text.NumberFormat
 import java.time.Instant
-import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
 
@@ -78,7 +75,7 @@ fun SpendingChart(
     }
 
     LaunchedEffect(monthlyData) {
-        val seriesData = if (monthlyData.isEmpty()) listOf(0.0, 0.0, 0.0, 0.0, 0.0, 0.0) else monthlyData
+        val seriesData = monthlyData.ifEmpty { listOf(0.0, 0.0, 0.0, 0.0, 0.0, 0.0) }
         modelProducer.runTransaction {
             lineModel {
                 series(seriesData)
@@ -231,7 +228,6 @@ private fun calculateMonthlySpending(
                 Instant.ofEpochMilli(it).atZone(zoneId).toLocalDate()
             }
 
-            val stopDate = cancelLimitDate
             var billingDate = startLocalDate
             var occurrences = 0
 
@@ -239,7 +235,7 @@ private fun calculateMonthlySpending(
                 // Check if billing date is within this month
                 if (!billingDate.isBefore(startOfMonth)) {
                     // Check if it was cancelled before this billing date
-                    val isAfterStop = stopDate != null && billingDate.isAfter(stopDate)
+                    val isAfterStop = cancelLimitDate != null && billingDate.isAfter(cancelLimitDate)
                     if (!isAfterStop) {
                         occurrences++
                     }

@@ -32,7 +32,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
@@ -55,7 +55,6 @@ import com.zerodev.subscriptionmanager.ui.components.SpendingChart
 import com.zerodev.subscriptionmanager.ui.components.SubscriptionCard
 import com.zerodev.subscriptionmanager.ui.components.UpcomingCard
 import com.zerodev.subscriptionmanager.ui.theme.DarkBackground
-import androidx.compose.ui.graphics.Color
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi

@@ -67,9 +67,9 @@ fun AppHeaderNavIcon(modifier: Modifier = Modifier) {
 
 @Composable
 fun AppHeaderActions(
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
-    hasUnreadNotifications: Boolean = false,
-    modifier: Modifier = Modifier
+    hasUnreadNotifications: Boolean = false
 ) {
     val iconRes = if (hasUnreadNotifications) R.drawable.ic_notif_fill else R.drawable.ic_notif
     Box(

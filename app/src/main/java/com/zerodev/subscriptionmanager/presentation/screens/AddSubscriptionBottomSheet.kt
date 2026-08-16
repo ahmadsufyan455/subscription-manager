@@ -1,6 +1,5 @@
 package com.zerodev.subscriptionmanager.presentation.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -65,19 +64,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zerodev.subscriptionmanager.R
 import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
-import com.zerodev.subscriptionmanager.core.utils.validateFormInput
 import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
+import com.zerodev.subscriptionmanager.core.utils.validateFormInput
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.presentation.viewmodel.HomeViewModel
 import com.zerodev.subscriptionmanager.ui.components.CustomInputField
-import com.zerodev.subscriptionmanager.ui.components.SegmentedControl
-import com.zerodev.subscriptionmanager.ui.components.PopularServiceItem
 import com.zerodev.subscriptionmanager.ui.components.DetailSubscriptionContent
+import com.zerodev.subscriptionmanager.ui.components.PopularServiceItem
+import com.zerodev.subscriptionmanager.ui.components.SegmentedControl
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
