@@ -1,12 +1,13 @@
 package com.zerodev.subscriptionmanager.core.utils
 
 import android.content.Context
+import androidx.core.content.edit
 import java.text.NumberFormat
 import java.util.Locale
 
 enum class Currency(val code: String, val symbol: String, val locale: Locale, val rateToUsd: Double) {
     USD("USD", "$", Locale.US, 1.0),
-    IDR("IDR", "Rp", Locale("id", "ID"), 17500.0);
+    IDR("IDR", "Rp", Locale.forLanguageTag("id-ID"), 17500.0);
 }
 
 object CurrencyFormatter {
@@ -22,7 +23,9 @@ object CurrencyFormatter {
 
     fun setSelectedCurrency(context: Context, currency: Currency) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_CURRENCY, currency.code).apply()
+        prefs.edit {
+            putString(KEY_CURRENCY, currency.code)
+        }
     }
 
     fun convertFromUsd(amount: Double, currency: Currency): Double {
@@ -42,22 +45,20 @@ object CurrencyFormatter {
         return formatter.format(converted)
     }
 
+    @Suppress("unused")
     fun formatCompact(amountInUsd: Double, currency: Currency): String {
         val converted = convertFromUsd(amountInUsd, currency)
-        return when {
-            currency == Currency.IDR && converted >= 1_000_000 -> {
-                "${currency.symbol}${String.format(currency.locale, "%.1f", converted / 1_000_000)}M"
-            }
-            currency == Currency.IDR && converted >= 1_000 -> {
-                "${currency.symbol}${String.format(currency.locale, "%.0f", converted / 1_000)}K"
-            }
-            else -> {
-                val formatter = NumberFormat.getCurrencyInstance(currency.locale).apply {
-                    maximumFractionDigits = if (currency == Currency.IDR) 0 else 2
-                    minimumFractionDigits = 0
+        return when (currency) {
+            Currency.IDR -> when {
+                converted >= 1_000_000 -> {
+                    "${currency.symbol}${String.format(currency.locale, "%.1f", converted / 1_000_000)}M"
                 }
-                formatter.format(converted)
+                converted >= 1_000 -> {
+                    "${currency.symbol}${String.format(currency.locale, "%.0f", converted / 1_000)}K"
+                }
+                else -> format(amountInUsd, currency)
             }
+            else -> format(amountInUsd, currency)
         }
     }
     fun formatInput(input: String, currency: Currency): String {
