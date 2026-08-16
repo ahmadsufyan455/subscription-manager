@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -41,6 +42,7 @@ import com.zerodev.subscriptionmanager.presentation.screens.HomeScreen
 import com.zerodev.subscriptionmanager.presentation.screens.NotificationScreen
 import com.zerodev.subscriptionmanager.presentation.screens.SubscriptionScreen
 import com.zerodev.subscriptionmanager.presentation.screens.SettingsScreen
+import com.zerodev.subscriptionmanager.ui.theme.BottomSheetBackground
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -128,9 +130,9 @@ fun MainScreen(
                 ModalBottomSheet(
                     onDismissRequest = { showAddSubscriptionSheet = false },
                     sheetState = bottomSheetState,
-                    containerColor = com.zerodev.subscriptionmanager.ui.theme.BottomSheetBackground,
-                    scrimColor = androidx.compose.ui.graphics.Color.Transparent,
-                    dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle(color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.25f)) }
+                    containerColor = BottomSheetBackground,
+                    scrimColor = Color.Transparent,
+                    dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.25f)) }
                 ) {
                     AddSubscriptionBottomSheet(
                         onDismiss = { showAddSubscriptionSheet = false },
