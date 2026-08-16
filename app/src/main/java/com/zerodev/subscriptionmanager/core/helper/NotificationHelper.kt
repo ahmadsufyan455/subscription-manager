@@ -8,9 +8,9 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 import com.zerodev.subscriptionmanager.MainActivity
 import com.zerodev.subscriptionmanager.R
 import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
@@ -26,16 +26,14 @@ object NotificationHelper {
      * Create notification channel (required for Android 8.0+)
      */
     fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
-                description = CHANNEL_DESCRIPTION
-            }
-
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+        val importance = NotificationManager.IMPORTANCE_DEFAULT
+        val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME, importance).apply {
+            description = CHANNEL_DESCRIPTION
         }
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
     }
 
     /**
@@ -109,7 +107,7 @@ object NotificationHelper {
         val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth.coerceAtLeast(targetSize) else targetSize
         val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight.coerceAtLeast(targetSize) else targetSize
 
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height)
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)
