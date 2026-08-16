@@ -19,6 +19,13 @@ enum class BillingCycle(val displayName: String, val daysInCycle: Int) {
 }
 
 @Serializable
+enum class RenewalUrgency {
+    URGENT,
+    SOON,
+    NORMAL
+}
+
+@Serializable
 enum class SubscriptionStatus {
     ACTIVE,
     CANCELLED,
@@ -105,6 +112,24 @@ data class Subscription(
         if (millisLeft <= 0) return 0
         val dayMillis = 24 * 60 * 60 * 1000L
         return ((millisLeft + dayMillis - 1) / dayMillis).toInt()
+    }
+
+    fun getRemainingDaysLabel(): String? {
+        val days = getRemainingDays() ?: return null
+        return when (days) {
+            0 -> "Renews Today"
+            1 -> "Renews Tomorrow"
+            else -> "In $days days"
+        }
+    }
+
+    fun getRenewalUrgency(): RenewalUrgency {
+        val days = getRemainingDays() ?: return RenewalUrgency.NORMAL
+        return when {
+            days <= 1 -> RenewalUrgency.URGENT
+            days <= 7 -> RenewalUrgency.SOON
+            else -> RenewalUrgency.NORMAL
+        }
     }
 
     fun needsRenewal(): Boolean {

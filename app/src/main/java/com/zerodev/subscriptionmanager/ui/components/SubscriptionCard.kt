@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zerodev.subscriptionmanager.R
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
+import com.zerodev.subscriptionmanager.data.local.entities.RenewalUrgency
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
@@ -174,18 +175,48 @@ fun SubscriptionCard(
                             Spacer(modifier = Modifier.height(4.dp))
                             
                             if (subscription.isActive()) {
-                                val billingCycleText = when (subscription.billingCycle) {
-                                    BillingCycle.MONTHLY -> "MONTHLY"
-                                    BillingCycle.WEEKLY -> "WEEKLY"
-                                    BillingCycle.YEARLY -> "YEARLY"
-                                    BillingCycle.CUSTOM -> "${subscription.customCycleDays ?: 0} DAYS"
+                                val remainingLabel = subscription.getRemainingDaysLabel()
+                                val urgency = subscription.getRenewalUrgency()
+
+                                if (remainingLabel != null && (urgency == RenewalUrgency.URGENT || urgency == RenewalUrgency.SOON)) {
+                                    val (badgeBgColor, badgeTextColor) = when (urgency) {
+                                        RenewalUrgency.URGENT -> Pair(
+                                            Color(0xFFFF9500).copy(alpha = 0.18f),
+                                            Color(0xFFFF9F0A)
+                                        )
+                                        RenewalUrgency.SOON -> Pair(
+                                            Primary.copy(alpha = 0.15f),
+                                            Primary
+                                        )
+                                        else -> Pair(Color.Transparent, TextSecondary)
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(badgeBgColor)
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = remainingLabel.uppercase(),
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                            color = badgeTextColor,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                } else {
+                                    val labelText = remainingLabel?.uppercase() ?: when (subscription.billingCycle) {
+                                        BillingCycle.MONTHLY -> "MONTHLY"
+                                        BillingCycle.WEEKLY -> "WEEKLY"
+                                        BillingCycle.YEARLY -> "YEARLY"
+                                        BillingCycle.CUSTOM -> "${subscription.customCycleDays ?: 0} DAYS"
+                                    }
+                                    Text(
+                                        text = labelText,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = TextSecondary,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
-                                Text(
-                                    text = billingCycleText,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary,
-                                    fontWeight = FontWeight.Bold
-                                )
                             } else {
                                 val (badgeBgColor, badgeTextColor, badgeText) = when (subscription.status) {
                                     SubscriptionStatus.CANCELLED -> Triple(
