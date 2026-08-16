@@ -8,6 +8,8 @@ import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.NotificationRepository
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
 
+import java.util.Locale
+
 object RenewalHelper {
 
     /**
@@ -79,11 +81,11 @@ object RenewalHelper {
         notificationRepository: NotificationRepository?
     ) {
         // Save notification to database
-        val formattedPrice = String.format("%.2f", subscription.price)
+        val formattedPrice = String.format(Locale.US, "%.2f", subscription.price)
         notificationRepository?.insertNotification(
             NotificationEntity(
                 title = "Payment Successful",
-                message = "Your payment of \$$formattedPrice for ${subscription.name} was successful.",
+                message = "Your payment of $$formattedPrice for ${subscription.name} was successful.",
                 type = NotificationType.PAYMENT_SUCCESSFUL,
                 subscriptionId = subscription.id
             )

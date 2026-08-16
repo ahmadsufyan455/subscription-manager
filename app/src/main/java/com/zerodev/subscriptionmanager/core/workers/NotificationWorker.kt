@@ -12,6 +12,7 @@ import com.zerodev.subscriptionmanager.core.helper.NotificationHelper
 import com.zerodev.subscriptionmanager.core.helper.NotificationTracker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.util.Locale
 
 /**
  * Background worker that runs daily to check for upcoming payments
@@ -60,8 +61,8 @@ class NotificationWorker(
                             )
 
                             // Save notification to database
-                            val formattedPrice = String.format("%.2f", subscription.price)
-                            val message = "${subscription.name} (\$$formattedPrice) will renew in $remainingDays day${if (remainingDays > 1) "s" else ""}. Make sure you have sufficient funds."
+                            val formattedPrice = String.format(Locale.US, "%.2f", subscription.price)
+                            val message = "${subscription.name} ($$formattedPrice) will renew in $remainingDays day${if (remainingDays > 1) "s" else ""}. Make sure you have sufficient funds."
                             notificationRepository.insertNotification(
                                 NotificationEntity(
                                     title = "Upcoming Bill",
