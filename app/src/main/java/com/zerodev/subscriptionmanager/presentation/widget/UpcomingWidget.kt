@@ -182,7 +182,12 @@ private fun CompactUpcomingView(
 
     val iconRes = getSubscriptionIcon(subscription.name)
     val nextBilling = subscription.getNextBillingDate()
-    val remainingLabel = subscription.getRemainingDaysLabel() ?: "Upcoming"
+    val remainingLabel = when (val daysLeft = subscription.getRemainingDays()) {
+        0 -> "Today"
+        1 -> "Tomorrow"
+        null -> "Upcoming"
+        else -> "In $daysLeft days"
+    }
     val urgency = subscription.getRenewalUrgency()
 
     val badgeColor = when (urgency) {
@@ -233,7 +238,7 @@ private fun CompactUpcomingView(
                 text = "UPCOMING",
                 style = TextStyle(
                     color = ColorProvider(UpcomingWidget.WidgetTextSecondary),
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
@@ -243,14 +248,14 @@ private fun CompactUpcomingView(
             Box(
                 modifier = GlanceModifier
                     .background(badgeColor)
-                    .cornerRadius(8.dp)
-                    .padding(horizontal = 7.dp, vertical = 3.dp)
+                    .cornerRadius(6.dp)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(
                     text = remainingLabel,
                     style = TextStyle(
                         color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
-                        fontSize = 10.sp,
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
                     )
                 )
@@ -442,7 +447,12 @@ private fun ColumnScope.StackedCardItem(
 ) {
     val iconRes = getSubscriptionIcon(subscription.name)
     val nextBilling = subscription.getNextBillingDate()
-    val remainingLabel = subscription.getRemainingDaysLabel() ?: "Upcoming"
+    val remainingLabel = when (val daysLeft = subscription.getRemainingDays()) {
+        0 -> "Today"
+        1 -> "Tomorrow"
+        null -> "Upcoming"
+        else -> "In $daysLeft days"
+    }
     val urgency = subscription.getRenewalUrgency()
 
     val badgeColor = when (urgency) {
