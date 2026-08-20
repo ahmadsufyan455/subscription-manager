@@ -5,9 +5,10 @@ package com.zerodev.subscriptionmanager.presentation.widget
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -19,15 +20,18 @@ import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
-import androidx.glance.appwidget.lazy.LazyColumn
-import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
+import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ColumnScope
 import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
@@ -36,6 +40,7 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -65,13 +70,13 @@ class UpcomingWidget : GlanceAppWidget(), KoinComponent {
 
         val KeyAction = ActionParameters.Key<String>("widget_action")
         val KeySubscriptionId = ActionParameters.Key<Int>(EXTRA_SUBSCRIPTION_ID)
-
-        private val SMALL_BOX = DpSize(100.dp, 100.dp)
-        private val MEDIUM_BOX = DpSize(220.dp, 100.dp)
-        private val LARGE_BOX = DpSize(220.dp, 200.dp)
+        val KeyCardIndex = intPreferencesKey("upcoming_card_index")
 
         // Palette matching app theme
+        val WidgetBackground = Color(0xFF0C0B14)
         val WidgetCardBackground = Color(0xFF151421)
+        val WidgetCardStack1 = Color(0xFF222036)
+        val WidgetCardStack2 = Color(0xFF191828)
         val WidgetIconBackground = Color(0x1FFFFFFF)
         val WidgetPrimary = Color(0xFF605DFF)
         val WidgetTextPrimary = Color(0xFFFFFFFF)
@@ -80,9 +85,9 @@ class UpcomingWidget : GlanceAppWidget(), KoinComponent {
         val WidgetSoonOrange = Color(0xFFFF9900)
     }
 
-    override val sizeMode: SizeMode = SizeMode.Responsive(
-        setOf(SMALL_BOX, MEDIUM_BOX, LARGE_BOX)
-    )
+    override val stateDefinition = PreferencesGlanceStateDefinition
+
+    override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val repository: SubscriptionRepository by inject()
@@ -93,41 +98,43 @@ class UpcomingWidget : GlanceAppWidget(), KoinComponent {
             emptyList()
         }
 
+        // Active subscriptions sorted by next billing date
         val activeSubscriptions = allSubscriptions
             .filter { it.status == SubscriptionStatus.ACTIVE && it.getNextBillingDate() != null }
             .sortedBy { it.getNextBillingDate() }
+
+        // Filter for upcoming payments due within 7 days
+        val dueSoonSubscriptions = activeSubscriptions
+            .filter { (it.getRemainingDays() ?: Int.MAX_VALUE) <= 7 }
 
         val currency = CurrencyFormatter.getSelectedCurrency(context)
 
         provideContent {
             val size = LocalSize.current
+            val prefs = currentState<Preferences>()
+            val rawIndex = prefs[KeyCardIndex] ?: 0
+
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
                     .appWidgetBackground()
-                    .background(WidgetCardBackground)
-                    .cornerRadius(20.dp)
-                    .padding(12.dp)
+                    .background(WidgetBackground)
+                    .cornerRadius(18.dp)
+                    .padding(10.dp)
             ) {
-                when {
-                    size.width < 210.dp -> {
-                        CompactUpcomingView(
-                            subscription = activeSubscriptions.firstOrNull(),
-                            currency = currency
-                        )
-                    }
-                    size.height < 180.dp -> {
-                        MediumUpcomingView(
-                            subscriptions = activeSubscriptions,
-                            currency = currency
-                        )
-                    }
-                    else -> {
-                        ExpandedUpcomingView(
-                            subscriptions = activeSubscriptions,
-                            currency = currency
-                        )
-                    }
+                // If width is narrow (compact 2x2 square), show Hero Card.
+                // If width is wide (4x1, 4x2, 4x3), show Adaptive Stacked Carousel.
+                if (size.width < 190.dp) {
+                    CompactUpcomingView(
+                        subscription = activeSubscriptions.firstOrNull(),
+                        currency = currency
+                    )
+                } else {
+                    MediumStackedUpcomingView(
+                        subscriptions = dueSoonSubscriptions,
+                        rawIndex = rawIndex,
+                        currency = currency
+                    )
                 }
             }
         }
@@ -135,7 +142,31 @@ class UpcomingWidget : GlanceAppWidget(), KoinComponent {
 }
 
 /**
- * 2x2 Compact Widget View: Hero Card layout with balanced visual hierarchy
+ * Action callback to navigate cards in the stacked carousel
+ */
+class NavigateCardAction : ActionCallback {
+    companion object {
+        val DeltaKey = ActionParameters.Key<Int>("delta")
+    }
+
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        val delta = parameters[DeltaKey] ?: 1
+        updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+            prefs.toMutablePreferences().apply {
+                val current = this[UpcomingWidget.KeyCardIndex] ?: 0
+                this[UpcomingWidget.KeyCardIndex] = current + delta
+            }
+        }
+        UpcomingWidget().update(context, glanceId)
+    }
+}
+
+/**
+ * 2x2 Compact Widget View: Hero Card layout
  */
 @Composable
 private fun CompactUpcomingView(
@@ -143,7 +174,10 @@ private fun CompactUpcomingView(
     currency: Currency
 ) {
     if (subscription == null) {
-        EmptyUpcomingView(isCompact = true)
+        EmptyUpcomingView(
+            isCompact = true,
+            message = "No upcoming bills"
+        )
         return
     }
 
@@ -185,6 +219,9 @@ private fun CompactUpcomingView(
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
+            .background(UpcomingWidget.WidgetCardBackground)
+            .cornerRadius(16.dp)
+            .padding(10.dp)
             .clickable(openDetailAction),
         verticalAlignment = Alignment.Vertical.Top
     ) {
@@ -299,158 +336,121 @@ private fun CompactUpcomingView(
 }
 
 /**
- * 4x2 Medium Widget View: Header with Upcoming count/total + 2-3 upcoming items
+ * 4x2 Medium/Wide Widget View: Ergonomic Bottom-Stepper Stacked Card Carousel
  */
 @Composable
-private fun MediumUpcomingView(
+private fun MediumStackedUpcomingView(
     subscriptions: List<Subscription>,
+    rawIndex: Int,
     currency: Currency
 ) {
     if (subscriptions.isEmpty()) {
-        EmptyUpcomingView(isCompact = false)
+        EmptyUpcomingView(
+            isCompact = false,
+            message = "No payments due this week 🎉"
+        )
         return
     }
 
-    val totalUpcoming = subscriptions.sumOf { it.price }
-    val displayItems = subscriptions.take(2)
+    val totalCount = subscriptions.size
+    val currentIndex = ((rawIndex % totalCount) + totalCount) % totalCount
+    val currentSub = subscriptions[currentIndex]
+    val totalThisWeek = subscriptions.sumOf { it.price }
 
-    Column(
-        modifier = GlanceModifier.fillMaxSize()
-    ) {
-        WidgetHeader(
-            subtitle = "${subscriptions.size} due soon (${CurrencyFormatter.format(totalUpcoming, currency)})"
-        )
-
-        Spacer(modifier = GlanceModifier.height(8.dp))
-
-        Column(
-            modifier = GlanceModifier.fillMaxWidth().defaultWeight()
-        ) {
-            displayItems.forEachIndexed { index, sub ->
-                if (index > 0) {
-                    Spacer(modifier = GlanceModifier.height(6.dp))
-                }
-                UpcomingSubscriptionRow(
-                    subscription = sub,
-                    currency = currency
-                )
-            }
-        }
-    }
-}
-
-/**
- * 4x3+ Expanded Widget View: Header with Upcoming count/total + scrollable list
- */
-@Composable
-private fun ExpandedUpcomingView(
-    subscriptions: List<Subscription>,
-    currency: Currency
-) {
-    if (subscriptions.isEmpty()) {
-        EmptyUpcomingView(isCompact = false)
-        return
-    }
-
-    val totalUpcoming = subscriptions.sumOf { it.price }
-
-    Column(
-        modifier = GlanceModifier.fillMaxSize()
-    ) {
-        WidgetHeader(
-            subtitle = "${subscriptions.size} active (${CurrencyFormatter.format(totalUpcoming, currency)} total)"
-        )
-
-        Spacer(modifier = GlanceModifier.height(8.dp))
-
-        LazyColumn(
-            modifier = GlanceModifier.fillMaxWidth().defaultWeight()
-        ) {
-            items(subscriptions) { sub ->
-                Box(modifier = GlanceModifier.padding(vertical = 3.dp)) {
-                    UpcomingSubscriptionRow(
-                        subscription = sub,
-                        currency = currency
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Common Header for Medium and Large widgets
- */
-@Composable
-private fun WidgetHeader(
-    subtitle: String,
-    title: String = "Upcoming Payments"
-) {
     val openHomeAction = actionStartActivity<MainActivity>()
 
-    val addAction = actionStartActivity<MainActivity>(
-        actionParametersOf(
-            UpcomingWidget.KeyAction to UpcomingWidget.ACTION_ADD_SUBSCRIPTION
-        )
-    )
-
-    Row(
-        modifier = GlanceModifier.fillMaxWidth(),
-        verticalAlignment = Alignment.Vertical.CenterVertically
+    Column(
+        modifier = GlanceModifier.fillMaxSize()
     ) {
-        Column(
-            modifier = GlanceModifier.defaultWeight().clickable(openHomeAction)
+        // 1. Clean Minimal Header (Tapping opens the app)
+        Row(
+            modifier = GlanceModifier.fillMaxWidth().clickable(openHomeAction),
+            verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
-            Text(
-                text = title,
-                style = TextStyle(
-                    color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
+            Column(
+                modifier = GlanceModifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "THIS WEEK",
+                    style = TextStyle(
+                        color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
-            )
-            Text(
-                text = subtitle,
-                style = TextStyle(
-                    color = ColorProvider(UpcomingWidget.WidgetTextSecondary),
-                    fontSize = 10.sp
+                Text(
+                    text = "$totalCount due (${CurrencyFormatter.format(totalThisWeek, currency)})",
+                    style = TextStyle(
+                        color = ColorProvider(UpcomingWidget.WidgetTextSecondary),
+                        fontSize = 10.sp
+                    )
                 )
-            )
+            }
         }
 
-        // Quick "+" Add Button
-        Box(
-            modifier = GlanceModifier
-                .size(28.dp)
-                .background(UpcomingWidget.WidgetPrimary)
-                .cornerRadius(14.dp)
-                .clickable(addAction),
-            contentAlignment = Alignment.Center
+        Spacer(modifier = GlanceModifier.height(6.dp))
+
+        // 2. Full Adaptive Stacked Card Layout
+        Column(
+            modifier = GlanceModifier.fillMaxWidth().defaultWeight()
         ) {
-            Text(
-                text = "+",
-                style = TextStyle(
-                    color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
+            // Main Top Card with Bottom Stepper
+            StackedCardItem(
+                subscription = currentSub,
+                currentIndex = currentIndex,
+                totalCount = totalCount,
+                currency = currency
             )
+
+            // 3D Layered Under-cards effect when multiple items exist
+            if (totalCount > 1) {
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                // Layer 1 under-card
+                Box(
+                    modifier = GlanceModifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .padding(horizontal = 12.dp)
+                        .background(UpcomingWidget.WidgetCardStack1)
+                        .cornerRadius(4.dp)
+                ) {}
+                if (totalCount > 2) {
+                    Spacer(modifier = GlanceModifier.height(2.dp))
+                    // Layer 2 under-card
+                    Box(
+                        modifier = GlanceModifier
+                            .fillMaxWidth()
+                            .height(2.dp)
+                            .padding(horizontal = 24.dp)
+                            .background(UpcomingWidget.WidgetCardStack2)
+                            .cornerRadius(3.dp)
+                    ) {}
+                }
+            }
         }
     }
 }
 
 /**
- * Single subscription row used in Medium and Large widget views
+ * Single card item rendered inside the Stacked Carousel (with Bottom Ergonomic Stepper Pill)
  */
 @Composable
-private fun UpcomingSubscriptionRow(
+private fun ColumnScope.StackedCardItem(
     subscription: Subscription,
+    currentIndex: Int,
+    totalCount: Int,
     currency: Currency
 ) {
     val iconRes = getSubscriptionIcon(subscription.name)
     val nextBilling = subscription.getNextBillingDate()
     val remainingLabel = subscription.getRemainingDaysLabel() ?: "Upcoming"
     val urgency = subscription.getRenewalUrgency()
+
+    val badgeColor = when (urgency) {
+        RenewalUrgency.URGENT -> UpcomingWidget.WidgetUrgentRed
+        RenewalUrgency.SOON -> UpcomingWidget.WidgetSoonOrange
+        RenewalUrgency.NORMAL -> UpcomingWidget.WidgetPrimary
+    }
 
     val dateFormatted = if (nextBilling != null) {
         val localDate = Instant.ofEpochMilli(nextBilling)
@@ -462,11 +462,12 @@ private fun UpcomingSubscriptionRow(
         ""
     }
 
-    val urgencyColor = when (urgency) {
-        RenewalUrgency.URGENT -> UpcomingWidget.WidgetUrgentRed
-        RenewalUrgency.SOON -> UpcomingWidget.WidgetSoonOrange
-        RenewalUrgency.NORMAL -> UpcomingWidget.WidgetTextSecondary
+    val cycleLabel = when (subscription.billingCycle) {
+        BillingCycle.CUSTOM -> "${subscription.customCycleDays ?: 0}d"
+        else -> subscription.billingCycle.displayName
     }
+
+    val subtitle = if (dateFormatted.isNotEmpty()) "$cycleLabel · $dateFormatted" else cycleLabel
 
     val openDetailAction = actionStartActivity<MainActivity>(
         actionParametersOf(
@@ -475,63 +476,207 @@ private fun UpcomingSubscriptionRow(
         )
     )
 
-    Row(
+    Column(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(UpcomingWidget.WidgetIconBackground)
-            .cornerRadius(12.dp)
-            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .defaultWeight()
+            .background(UpcomingWidget.WidgetCardBackground)
+            .cornerRadius(16.dp)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
             .clickable(openDetailAction),
-        verticalAlignment = Alignment.Vertical.CenterVertically
+        verticalAlignment = Alignment.Vertical.Top
     ) {
-        Image(
-            provider = ImageProvider(iconRes),
-            contentDescription = subscription.name,
-            modifier = GlanceModifier.size(24.dp)
-        )
-
-        Spacer(modifier = GlanceModifier.width(8.dp))
-
-        Column(
-            modifier = GlanceModifier.defaultWeight()
+        // 1. Top Section: Brand Icon Tile + Subscription Name & Subtitle + Urgency Pill
+        Row(
+            modifier = GlanceModifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Vertical.CenterVertically
         ) {
-            Text(
-                text = subscription.name,
-                maxLines = 1,
-                style = TextStyle(
-                    color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+            // Brand Icon Tile
+            Box(
+                modifier = GlanceModifier
+                    .size(42.dp)
+                    .background(UpcomingWidget.WidgetIconBackground)
+                    .cornerRadius(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    provider = ImageProvider(iconRes),
+                    contentDescription = subscription.name,
+                    modifier = GlanceModifier.size(28.dp)
                 )
-            )
-            Text(
-                text = if (dateFormatted.isNotEmpty()) "$remainingLabel · $dateFormatted" else remainingLabel,
-                style = TextStyle(
-                    color = ColorProvider(urgencyColor),
-                    fontSize = 10.sp
+            }
+
+            Spacer(modifier = GlanceModifier.width(12.dp))
+
+            // Subscription Title & Subtitle
+            Column(
+                modifier = GlanceModifier.defaultWeight()
+            ) {
+                Text(
+                    text = subscription.name,
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
-            )
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    maxLines = 1,
+                    style = TextStyle(
+                        color = ColorProvider(UpcomingWidget.WidgetTextSecondary),
+                        fontSize = 12.sp
+                    )
+                )
+            }
+
+            Spacer(modifier = GlanceModifier.width(8.dp))
+
+            // Urgency Pill
+            Box(
+                modifier = GlanceModifier
+                    .background(badgeColor)
+                    .cornerRadius(7.dp)
+                    .padding(horizontal = 8.dp, vertical = 3.dp)
+            ) {
+                Text(
+                    text = remainingLabel,
+                    style = TextStyle(
+                        color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
         }
 
-        Spacer(modifier = GlanceModifier.width(8.dp))
+        Spacer(modifier = GlanceModifier.defaultWeight())
 
-        Text(
-            text = CurrencyFormatter.format(subscription.price, currency),
-            style = TextStyle(
-                color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-        )
+        // 2. Bottom Section: Amount Due & Price on Left, Stepper Pill [ ‹ 3/5 › ] on Right
+        Row(
+            modifier = GlanceModifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Vertical.Bottom
+        ) {
+            Column {
+                Text(
+                    text = "AMOUNT DUE",
+                    style = TextStyle(
+                        color = ColorProvider(UpcomingWidget.WidgetTextSecondary),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                Text(
+                    text = CurrencyFormatter.format(subscription.price, currency),
+                    style = TextStyle(
+                        color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+            }
+
+            Spacer(modifier = GlanceModifier.defaultWeight())
+
+            if (totalCount > 1) {
+                // Ergonomic Bottom Stepper Pill [ ‹  3/5  › ]
+                Row(
+                    modifier = GlanceModifier
+                        .background(UpcomingWidget.WidgetIconBackground)
+                        .cornerRadius(16.dp)
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.Vertical.CenterVertically
+                ) {
+                    // Prev ‹ Button
+                    Box(
+                        modifier = GlanceModifier
+                            .size(30.dp)
+                            .cornerRadius(15.dp)
+                            .clickable(
+                                actionRunCallback<NavigateCardAction>(
+                                    actionParametersOf(NavigateCardAction.DeltaKey to -1)
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "‹",
+                            style = TextStyle(
+                                color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+
+                    Spacer(modifier = GlanceModifier.width(4.dp))
+
+                    // Index Indicator e.g. "3/5"
+                    Text(
+                        text = "${currentIndex + 1}/$totalCount",
+                        style = TextStyle(
+                            color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+
+                    Spacer(modifier = GlanceModifier.width(4.dp))
+
+                    // Next › Button
+                    Box(
+                        modifier = GlanceModifier
+                            .size(30.dp)
+                            .cornerRadius(15.dp)
+                            .clickable(
+                                actionRunCallback<NavigateCardAction>(
+                                    actionParametersOf(NavigateCardAction.DeltaKey to 1)
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "›",
+                            style = TextStyle(
+                                color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            } else {
+                // If single item, show View Details button
+                Box(
+                    modifier = GlanceModifier
+                        .background(UpcomingWidget.WidgetPrimary)
+                        .cornerRadius(10.dp)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "View Details →",
+                        style = TextStyle(
+                            color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            }
+        }
     }
 }
 
 /**
- * Friendly Empty State view when there are no upcoming subscriptions
+ * Friendly Empty State view
  */
 @Composable
 private fun EmptyUpcomingView(
-    isCompact: Boolean
+    isCompact: Boolean,
+    message: String
 ) {
     val addAction = actionStartActivity<MainActivity>(
         actionParametersOf(
@@ -542,7 +687,9 @@ private fun EmptyUpcomingView(
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .padding(8.dp)
+            .background(UpcomingWidget.WidgetCardBackground)
+            .cornerRadius(16.dp)
+            .padding(10.dp)
             .clickable(addAction),
         verticalAlignment = Alignment.Vertical.CenterVertically,
         horizontalAlignment = Alignment.Horizontal.CenterHorizontally
@@ -550,16 +697,16 @@ private fun EmptyUpcomingView(
         Image(
             provider = ImageProvider(R.drawable.subtrack),
             contentDescription = "SubTrack",
-            modifier = GlanceModifier.size(if (isCompact) 28.dp else 36.dp)
+            modifier = GlanceModifier.size(if (isCompact) 28.dp else 34.dp)
         )
 
-        Spacer(modifier = GlanceModifier.height(6.dp))
+        Spacer(modifier = GlanceModifier.height(4.dp))
 
         Text(
-            text = if (isCompact) "No upcoming bills" else "No upcoming payments",
+            text = message,
             style = TextStyle(
                 color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold
             )
         )
@@ -576,7 +723,7 @@ private fun EmptyUpcomingView(
                 text = "+ Add Subscription",
                 style = TextStyle(
                     color = ColorProvider(UpcomingWidget.WidgetTextPrimary),
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 )
             )
