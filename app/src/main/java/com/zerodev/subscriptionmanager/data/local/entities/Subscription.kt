@@ -60,6 +60,9 @@ data class Subscription(
     @ColumnInfo(name = "cancelled_at")
     val cancelledAt: Long? = null,
 
+    @ColumnInfo(name = "notes")
+    val notes: String? = null,
+
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis()
 ) {

@@ -192,7 +192,6 @@ fun SubscriptionScreen(
                             }
                         }
                     },
-                    isEditMode = editSubscriptionId != null,
                     subscriptionId = editSubscriptionId,
                 )
             }

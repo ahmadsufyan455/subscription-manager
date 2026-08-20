@@ -32,6 +32,9 @@ fun CustomInputField(
     isError: Boolean = false,
     errorMessage: String? = null,
     readOnly: Boolean = false,
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default
@@ -48,7 +51,9 @@ fun CustomInputField(
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             isError = isError,
-            singleLine = true,
+            singleLine = singleLine,
+            minLines = minLines,
+            maxLines = maxLines,
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = Color.White.copy(alpha = 0.07f),

@@ -22,7 +22,8 @@ val databaseModule = module {
             "subscription_manager.db",
         ).addMigrations(
             SubscriptionDatabase.MIGRATION_1_2,
-            SubscriptionDatabase.MIGRATION_2_3
+            SubscriptionDatabase.MIGRATION_2_3,
+            SubscriptionDatabase.MIGRATION_3_4
         ).build()
     }
 }

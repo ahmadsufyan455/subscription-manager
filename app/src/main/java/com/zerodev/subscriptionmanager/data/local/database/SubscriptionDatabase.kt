@@ -11,7 +11,7 @@ import com.zerodev.subscriptionmanager.data.local.dao.SubscriptionDao
 import com.zerodev.subscriptionmanager.data.local.entities.NotificationEntity
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
 
-@Database(entities = [Subscription::class, NotificationEntity::class], version = 3, exportSchema = false)
+@Database(entities = [Subscription::class, NotificationEntity::class], version = 4, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class SubscriptionDatabase : RoomDatabase() {
     abstract fun subscriptionDao(): SubscriptionDao
@@ -39,6 +39,12 @@ abstract class SubscriptionDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE subscriptions ADD COLUMN notes TEXT DEFAULT NULL")
             }
         }
     }

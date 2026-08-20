@@ -158,7 +158,6 @@ fun HomeScreen(
                             }
                         }
                     },
-                    isEditMode = editSubscriptionId != null,
                     subscriptionId = editSubscriptionId,
                 )
             }

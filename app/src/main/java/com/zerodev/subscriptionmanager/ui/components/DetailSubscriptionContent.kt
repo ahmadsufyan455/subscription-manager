@@ -3,6 +3,7 @@ package com.zerodev.subscriptionmanager.ui.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,6 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,6 +44,8 @@ import com.zerodev.subscriptionmanager.core.utils.CurrencyFormatter
 import com.zerodev.subscriptionmanager.core.utils.getSubscriptionIcon
 import com.zerodev.subscriptionmanager.data.local.entities.BillingCycle
 import com.zerodev.subscriptionmanager.data.local.entities.Subscription
+import com.zerodev.subscriptionmanager.ui.theme.Primary
+import com.zerodev.subscriptionmanager.ui.theme.TextSecondary
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -50,6 +55,7 @@ import kotlin.math.abs
 fun DetailSubscriptionContent(
     existingSubscription: Subscription,
     currency: Currency,
+    onEditClick: () -> Unit,
     onCancelClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -60,64 +66,93 @@ fun DetailSubscriptionContent(
             .padding(horizontal = 24.dp)
             .padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
-        // 1. Logo and Name
+        // 1. Header with Logo, Name, and Top-Right Edit Icon
         val brandIcon = remember(existingSubscription.name) { getSubscriptionIcon(existingSubscription.name) }
         val firstLetter = existingSubscription.name.firstOrNull()?.uppercase() ?: "S"
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Edit Icon Button (Top-Right)
             Box(
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(
-                        if (brandIcon != R.drawable.subtrack) Color.White.copy(alpha = 0.05f)
-                        else {
-                            val colors = listOf(
-                                Color(0xFFE50914), // Red
-                                Color(0xFF1DB954), // Green
-                                Color(0xFF1F85DE), // Blue
-                                Color(0xFFFF9900), // Orange
-                                Color(0xFF7C3AED), // Violet
-                                Color(0xFFEC4899), // Pink
-                                Color(0xFF00DF89), // Mint
-                                Color(0xFFF59E0B)  // Yellow/Amber
-                            )
-                            val index = abs(existingSubscription.name.hashCode()) % colors.size
-                            colors[index]
-                        }
-                    ),
+                    .align(Alignment.TopEnd)
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.08f))
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.12f),
+                        shape = CircleShape
+                    )
+                    .clickable(onClick = onEditClick),
                 contentAlignment = Alignment.Center
             ) {
-                if (brandIcon != R.drawable.subtrack) {
-                    Icon(
-                        painter = painterResource(id = brandIcon),
-                        contentDescription = "Brand Logo",
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(48.dp)
-                    )
-                } else {
-                    Text(
-                        text = firstLetter,
-                        style = TextStyle(
-                            color = Color.White,
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit Subscription",
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp)
+                )
             }
 
-            Text(
-                text = existingSubscription.name,
-                style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            // Centered Logo and Name
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(
+                            if (brandIcon != R.drawable.subtrack) Color.White.copy(alpha = 0.05f)
+                            else {
+                                val colors = listOf(
+                                    Color(0xFFE50914), // Red
+                                    Color(0xFF1DB954), // Green
+                                    Color(0xFF1F85DE), // Blue
+                                    Color(0xFFFF9900), // Orange
+                                    Color(0xFF7C3AED), // Violet
+                                    Color(0xFFEC4899), // Pink
+                                    Color(0xFF00DF89), // Mint
+                                    Color(0xFFF59E0B)  // Yellow/Amber
+                                )
+                                val index = abs(existingSubscription.name.hashCode()) % colors.size
+                                colors[index]
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (brandIcon != R.drawable.subtrack) {
+                        Icon(
+                            painter = painterResource(id = brandIcon),
+                            contentDescription = "Brand Logo",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    } else {
+                        Text(
+                            text = firstLetter,
+                            style = TextStyle(
+                                color = Color.White,
+                                fontSize = 36.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+
+                Text(
+                    text = existingSubscription.name,
+                    style = MaterialTheme.typography.titleLarge.copy(fontSize = 24.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
 
         // 2. Info Card
@@ -144,13 +179,13 @@ fun DetailSubscriptionContent(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(com.zerodev.subscriptionmanager.ui.theme.Primary.copy(alpha = 0.15f)),
+                            .background(Primary.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = currency.symbol,
                             style = TextStyle(
-                                color = com.zerodev.subscriptionmanager.ui.theme.Primary,
+                                color = Primary,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -170,7 +205,7 @@ fun DetailSubscriptionContent(
                         Text(
                             text = costLabel,
                             style = MaterialTheme.typography.bodySmall,
-                            color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary
+                            color = TextSecondary
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
@@ -186,7 +221,7 @@ fun DetailSubscriptionContent(
                         Text(
                             text = "Billing Cycle",
                             style = MaterialTheme.typography.bodySmall,
-                            color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary
+                            color = TextSecondary
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         val cycleText = when (existingSubscription.billingCycle) {
@@ -239,7 +274,7 @@ fun DetailSubscriptionContent(
                         Text(
                             text = "Next Payment",
                             style = MaterialTheme.typography.bodySmall,
-                            color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary
+                            color = TextSecondary
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         val nextBillingDate = existingSubscription.getNextBillingDate()
@@ -267,7 +302,7 @@ fun DetailSubscriptionContent(
                             Text(
                                 text = "AUTO-RENEW",
                                 style = TextStyle(
-                                    color = com.zerodev.subscriptionmanager.ui.theme.TextSecondary,
+                                    color = TextSecondary,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -278,7 +313,48 @@ fun DetailSubscriptionContent(
             }
         }
 
-        // 3. Cancel button
+        // 3. Notes Card (if present)
+        if (!existingSubscription.notes.isNullOrBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .border(
+                        width = 1.dp,
+                        color = Color.White.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Notes,
+                            contentDescription = "Notes",
+                            tint = Primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = "NOTES",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TextSecondary
+                        )
+                    }
+                    Text(
+                        text = existingSubscription.notes,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+
+        // 4. Cancel Button
         if (existingSubscription.isActive()) {
             Button(
                 modifier = Modifier
