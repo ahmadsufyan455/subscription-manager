@@ -67,7 +67,7 @@ class SubscriptionTest {
         }
 
         // Legacy JSON without notes field
-        val legacyJson = """{"id":1,"name":"Netflix","price":15.99,"billing_cycle":"MONTHLY","start_date":1000000}"""
+        val legacyJson = """{"id":1,"name":"Netflix","price":15.99,"billingCycle":"MONTHLY","startDate":1000000}"""
         val decoded = json.decodeFromString<Subscription>(legacyJson)
         assertEquals("Netflix", decoded.name)
         assertEquals(null, decoded.notes)

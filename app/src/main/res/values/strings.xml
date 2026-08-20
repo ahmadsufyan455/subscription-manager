@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">SubTrack</string>
+    <string name="widget_upcoming_name">Upcoming Payments</string>
+    <string name="widget_upcoming_description">View your upcoming subscription bills and due dates at a glance.</string>
 </resources>

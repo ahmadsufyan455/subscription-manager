@@ -47,12 +47,15 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
+import com.zerodev.subscriptionmanager.WidgetNavAction
 import dev.chrisbanes.haze.rememberHazeState
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun MainScreen(
-    navController: NavHostController = rememberNavController()
+    navController: NavHostController = rememberNavController(),
+    widgetNavAction: WidgetNavAction? = null,
+    onClearWidgetNavAction: () -> Unit = {}
 ) {
     val hazeState = rememberHazeState()
 
@@ -60,6 +63,7 @@ fun MainScreen(
         skipPartiallyExpanded = true
     )
     var showAddSubscriptionSheet by remember { mutableStateOf(false) }
+    var selectedSubscriptionId by remember { mutableStateOf<Int?>(null) }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -68,6 +72,39 @@ fun MainScreen(
     LaunchedEffect(currentRoute) {
         if (currentRoute == "all_subscriptions" || currentRoute == "notifications") {
             showAddSubscriptionSheet = false
+            selectedSubscriptionId = null
+        }
+    }
+
+    LaunchedEffect(widgetNavAction) {
+        when (widgetNavAction) {
+            is WidgetNavAction.OpenSubscription -> {
+                if (currentRoute != BottomNavItem.Home.route) {
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+                selectedSubscriptionId = widgetNavAction.subscriptionId
+                showAddSubscriptionSheet = true
+                onClearWidgetNavAction()
+            }
+            is WidgetNavAction.AddSubscription -> {
+                if (currentRoute != BottomNavItem.Home.route) {
+                    navController.navigate(BottomNavItem.Home.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
+                selectedSubscriptionId = null
+                showAddSubscriptionSheet = true
+                onClearWidgetNavAction()
+            }
+            null -> {}
         }
     }
 
@@ -77,7 +114,10 @@ fun MainScreen(
             if (showBottomBar) {
                 BottomNavigationBar(
                     navController = navController,
-                    onAddSubscriptionClick = { showAddSubscriptionSheet = true },
+                    onAddSubscriptionClick = {
+                        selectedSubscriptionId = null
+                        showAddSubscriptionSheet = true
+                    },
                     modifier = Modifier.hazeEffect(hazeState, style = HazeMaterials.ultraThin())
                 )
             }
@@ -128,14 +168,21 @@ fun MainScreen(
                         .hazeEffect(hazeState, style = HazeMaterials.ultraThin())
                 )
                 ModalBottomSheet(
-                    onDismissRequest = { showAddSubscriptionSheet = false },
+                    onDismissRequest = {
+                        showAddSubscriptionSheet = false
+                        selectedSubscriptionId = null
+                    },
                     sheetState = bottomSheetState,
                     containerColor = BottomSheetBackground,
                     scrimColor = Color.Transparent,
                     dragHandle = { BottomSheetDefaults.DragHandle(color = Color.White.copy(alpha = 0.25f)) }
                 ) {
                     AddSubscriptionBottomSheet(
-                        onDismiss = { showAddSubscriptionSheet = false },
+                        onDismiss = {
+                            showAddSubscriptionSheet = false
+                            selectedSubscriptionId = null
+                        },
+                        subscriptionId = selectedSubscriptionId
                     )
                 }
             }

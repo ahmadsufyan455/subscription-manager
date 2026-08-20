@@ -20,6 +20,8 @@ import kotlinx.coroutines.launch
 
 import com.zerodev.subscriptionmanager.data.repository.NotificationRepository
 
+import com.zerodev.subscriptionmanager.presentation.widget.UpcomingWidgetHelper
+
 data class HomeUiState(
     val subscriptions: List<Subscription> = emptyList(),
     val isLoading: Boolean = false,
@@ -81,6 +83,7 @@ class HomeViewModel(
                         totalSpending = calculateTotalSpending(subscriptions),
                         activeSubscriptionsCount = subscriptions.count { it.status == SubscriptionStatus.ACTIVE }
                     )
+                    UpcomingWidgetHelper.updateWidget(application)
                 }
         }
     }
@@ -95,6 +98,7 @@ class HomeViewModel(
         viewModelScope.launch {
             try {
                 repository.insertSubscription(subscription)
+                UpcomingWidgetHelper.updateWidget(application)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to add subscription: ${e.message}"
@@ -107,6 +111,7 @@ class HomeViewModel(
         viewModelScope.launch {
             try {
                 repository.updateSubscription(subscription)
+                UpcomingWidgetHelper.updateWidget(application)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to update subscription: ${e.message}"
@@ -123,6 +128,7 @@ class HomeViewModel(
                     cancelledAt = System.currentTimeMillis()
                 )
                 repository.updateSubscription(cancelledSubscription)
+                UpcomingWidgetHelper.updateWidget(application)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to cancel subscription: ${e.message}"
@@ -137,6 +143,7 @@ class HomeViewModel(
                 repository.deleteSubscription(subscription)
                 // Clear notification tracking for deleted subscription
                 NotificationTracker.clearTrackingForSubscription(application, subscription.id)
+                UpcomingWidgetHelper.updateWidget(application)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     error = "Failed to delete subscription: ${e.message}"
@@ -178,6 +185,7 @@ class HomeViewModel(
             }
             try {
                 repository.replaceAllSubscriptions(subscriptions)
+                UpcomingWidgetHelper.updateWidget(application)
                 launch(Dispatchers.Main) { onResult(subscriptions.size) }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -194,6 +202,7 @@ class HomeViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 repository.replaceAllSubscriptions(emptyList())
+                UpcomingWidgetHelper.updateWidget(application)
                 launch(Dispatchers.Main) { onResult(true) }
             } catch (e: Exception) {
                 e.printStackTrace()

@@ -8,6 +8,7 @@ import com.zerodev.subscriptionmanager.data.local.entities.SubscriptionStatus
 import com.zerodev.subscriptionmanager.data.repository.NotificationRepository
 import com.zerodev.subscriptionmanager.data.repository.SubscriptionRepository
 
+import com.zerodev.subscriptionmanager.presentation.widget.UpcomingWidgetHelper
 import java.util.Locale
 
 object RenewalHelper {
@@ -27,6 +28,7 @@ object RenewalHelper {
             // Get all subscriptions as snapshot (not Flow)
             val subscriptions = repository.getAllSubscriptionsSnapshot()
             processSubscriptionList(context, subscriptions, repository, notificationRepository)
+            UpcomingWidgetHelper.updateWidget(context)
         } catch (e: Exception) {
             e.printStackTrace()
         }
