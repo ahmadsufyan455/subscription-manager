@@ -4,11 +4,14 @@ package com.zerodev.subscriptionmanager.presentation.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -71,6 +74,7 @@ class UpcomingWidget : GlanceAppWidget(), KoinComponent {
         val KeyAction = ActionParameters.Key<String>("widget_action")
         val KeySubscriptionId = ActionParameters.Key<Int>(EXTRA_SUBSCRIPTION_ID)
         val KeyCardIndex = intPreferencesKey("upcoming_card_index")
+        val KeyLastUpdated = longPreferencesKey("widget_last_updated")
 
         // Palette matching app theme
         val WidgetBackground = Color(0xFF0C0B14)
@@ -91,25 +95,20 @@ class UpcomingWidget : GlanceAppWidget(), KoinComponent {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val repository: SubscriptionRepository by inject()
-        val allSubscriptions = try {
-            repository.getAllSubscriptionsSnapshot()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            emptyList()
-        }
-
-        // Active subscriptions sorted by next billing date
-        val activeSubscriptions = allSubscriptions
-            .filter { it.status == SubscriptionStatus.ACTIVE && it.getNextBillingDate() != null }
-            .sortedBy { it.getNextBillingDate() }
-
-        // Filter for upcoming payments due within 7 days
-        val dueSoonSubscriptions = activeSubscriptions
-            .filter { (it.getRemainingDays() ?: Int.MAX_VALUE) <= 7 }
-
-        val currency = CurrencyFormatter.getSelectedCurrency(context)
 
         provideContent {
+            val allSubscriptions by repository.getAllSubscriptions().collectAsState(initial = emptyList())
+
+            // Active subscriptions sorted by next billing date
+            val activeSubscriptions = allSubscriptions
+                .filter { it.status == SubscriptionStatus.ACTIVE && it.getNextBillingDate() != null }
+                .sortedBy { it.getNextBillingDate() }
+
+            // Filter for upcoming payments due within 7 days
+            val dueSoonSubscriptions = activeSubscriptions
+                .filter { (it.getRemainingDays() ?: Int.MAX_VALUE) <= 7 }
+
+            val currency = CurrencyFormatter.getSelectedCurrency(context)
             val size = LocalSize.current
             val prefs = currentState<Preferences>()
             val rawIndex = prefs[KeyCardIndex] ?: 0

@@ -102,6 +102,12 @@ class MainActivity : ComponentActivity() {
         handleWidgetIntent(intent)
     }
 
+    override fun onStop() {
+        super.onStop()
+        // Ensure widget is synchronized with any changes made during the session
+        UpcomingWidgetHelper.updateWidget(this)
+    }
+
     private fun handleWidgetIntent(intent: Intent?) {
         if (intent == null) return
         val action = intent.getStringExtra("widget_action") ?: intent.action
